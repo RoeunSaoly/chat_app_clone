@@ -1,0 +1,10 @@
+# Ignore the .git directory
+.git
+# Ignore all markdown files except README.md
+*.md
+!README.md
+# Ignore node_modules folders in any directory
+**/node_modules
+# Ignore cache and log files
+.cache
+*.log

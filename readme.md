@@ -1,9 +1,9 @@
-# Real-Time Chat App
+# Real-Time Chat Application
 
-**Kotlin + Jetpack Compose + Express.js + MySQL**
+A scalable **real-time chat application** built with an Android client and a Node.js backend.
+The system supports real-time messaging, authentication, chat rooms, and persistent message storage.
 
-A full-stack **real-time chat application** consisting of an Android mobile client and a Node.js backend.
-The system supports authentication, real-time messaging, chat rooms, and message history.
+The architecture is designed for **scalability**, using Redis pub/sub to synchronize messages across multiple backend instances.
 
 ---
 
@@ -13,120 +13,141 @@ The system supports authentication, real-time messaging, chat rooms, and message
 
 * Kotlin
 * Jetpack Compose
-* Retrofit (REST API)
-* WebSocket Client (Socket.IO)
+* Retrofit (REST API client)
+* Socket.IO client (WebSocket communication)
 
 ## Backend
 
 * Node.js
 * Express.js
 * Socket.IO
-* JWT Authentication
 
-## Database
+## Infrastructure
 
-* MySQL
+* Redis (pub/sub message broker)
+* MySQL (persistent database)
+* Docker & Docker Compose
+
+---
+
+# Architecture Overview
+
+```text
+Android Client
+      │
+      │ REST API (Authentication, Users, Rooms)
+      ▼
+Express Backend
+      │
+      │ WebSocket
+      ▼
+Socket.IO
+      │
+      ▼
+Redis Pub/Sub
+      │
+      ▼
+Multiple Backend Instances
+      │
+      ▼
+MySQL Database
+```
+
+Redis ensures that messages are synchronized between backend instances when scaling horizontally.
 
 ---
 
 # Project Structure
 
-```
+```text
 realtime-chat-app/
 │
-├── backend/              # Express + Socket.IO backend
-├── mobile/               # Kotlin Android app
-├── database/             # MySQL schema
-├── docs/                 # API documentation
-├── docker/               # Docker configuration (optional)
+├── backend/
+│   │
+│   ├── src/
+│   │   │
+│   │   ├── config/
+│   │   │   ├── db.js
+│   │   │   ├── redis.js
+│   │   │   └── socket.js
+│   │   │
+│   │   ├── controllers/
+│   │   │   ├── authController.js
+│   │   │   └── chatController.js
+│   │   │
+│   │   ├── services/
+│   │   │   ├── authService.js
+│   │   │   └── chatService.js
+│   │   │
+│   │   ├── models/
+│   │   │   ├── userModel.js
+│   │   │   ├── roomModel.js
+│   │   │   └── messageModel.js
+│   │   │
+│   │   ├── routes/
+│   │   │   ├── authRoutes.js
+│   │   │   └── chatRoutes.js
+│   │   │
+│   │   ├── sockets/
+│   │   │   └── chatSocket.js
+│   │   │
+│   │   ├── middleware/
+│   │   │   └── authMiddleware.js
+│   │   │
+│   │   ├── utils/
+│   │   │   └── logger.js
+│   │   │
+│   │   └── app.js
+│   │
+│   ├── server.js
+│   ├── Dockerfile
+│   ├── package.json
+│   └── .env
+│
+├── mobile/
+│   │
+│   └── app/src/main/java/com/chatapp/
+│       │
+│       ├── data/
+│       │   ├── api/
+│       │   │   ├── ApiService.kt
+│       │   │   └── SocketClient.kt
+│       │   │
+│       │   ├── model/
+│       │   │   ├── User.kt
+│       │   │   ├── Message.kt
+│       │   │   └── ChatRoom.kt
+│       │   │
+│       │   └── repository/
+│       │       └── ChatRepository.kt
+│       │
+│       ├── ui/
+│       │   ├── screen/
+│       │   │   ├── LoginScreen.kt
+│       │   │   ├── ChatListScreen.kt
+│       │   │   └── ChatRoomScreen.kt
+│       │   │
+│       │   ├── components/
+│       │   │   ├── ChatBubble.kt
+│       │   │   └── MessageInput.kt
+│       │   │
+│       │   └── theme/
+│       │       └── Theme.kt
+│       │
+│       ├── viewmodel/
+│       │   └── ChatViewModel.kt
+│       │
+│       └── MainActivity.kt
+│
+├── database/
+│   └── schema.sql
+│
+├── docker/
+│   └── redis/
+│       └── redis.conf
+│
+├── docker-compose.yml
 └── README.md
-```
-
----
-
-# Backend Structure
-
-```
-backend/
-│
-├── src/
-│   │
-│   ├── config/
-│   │   ├── db.js
-│   │   └── socket.js
-│   │
-│   ├── controllers/
-│   │   ├── authController.js
-│   │   └── chatController.js
-│   │
-│   ├── models/
-│   │   ├── userModel.js
-│   │   ├── messageModel.js
-│   │   └── roomModel.js
-│   │
-│   ├── routes/
-│   │   ├── authRoutes.js
-│   │   └── chatRoutes.js
-│   │
-│   ├── services/
-│   │   ├── authService.js
-│   │   └── chatService.js
-│   │
-│   ├── sockets/
-│   │   └── chatSocket.js
-│   │
-│   ├── middleware/
-│   │   └── authMiddleware.js
-│   │
-│   ├── utils/
-│   │   └── logger.js
-│   │
-│   └── app.js
-│
-├── server.js
-├── package.json
-└── .env
-```
-
----
-
-# Android Structure
-
-```
-mobile/
-│
-└── app/src/main/java/com/chatapp/
-│
-├── data/
-│   ├── api/
-│   │   ├── ApiService.kt
-│   │   └── SocketClient.kt
-│   │
-│   ├── model/
-│   │   ├── User.kt
-│   │   ├── Message.kt
-│   │   └── ChatRoom.kt
-│   │
-│   └── repository/
-│       └── ChatRepository.kt
-│
-├── ui/
-│   ├── screen/
-│   │   ├── LoginScreen.kt
-│   │   ├── ChatListScreen.kt
-│   │   └── ChatRoomScreen.kt
-│   │
-│   ├── components/
-│   │   ├── ChatBubble.kt
-│   │   └── MessageInput.kt
-│   │
-│   └── theme/
-│       └── Theme.kt
-│
-├── viewmodel/
-│   └── ChatViewModel.kt
-│
-└── MainActivity.kt
 ```
 
 ---
@@ -135,96 +156,228 @@ mobile/
 
 ## users
 
-```
-id INT PRIMARY KEY AUTO_INCREMENT
-name VARCHAR(100)
-email VARCHAR(255)
-password VARCHAR(255)
-created_at TIMESTAMP
+```sql
+CREATE TABLE users (
+ id INT AUTO_INCREMENT PRIMARY KEY,
+ name VARCHAR(100),
+ email VARCHAR(255) UNIQUE,
+ password VARCHAR(255),
+ created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
 ```
 
 ## rooms
 
-```
-id INT PRIMARY KEY AUTO_INCREMENT
-name VARCHAR(100)
-created_at TIMESTAMP
+```sql
+CREATE TABLE rooms (
+ id INT AUTO_INCREMENT PRIMARY KEY,
+ name VARCHAR(100),
+ created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
 ```
 
 ## messages
 
+```sql
+CREATE TABLE messages (
+ id INT AUTO_INCREMENT PRIMARY KEY,
+ room_id INT,
+ sender_id INT,
+ message TEXT,
+ created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+ FOREIGN KEY (room_id) REFERENCES rooms(id),
+ FOREIGN KEY (sender_id) REFERENCES users(id)
+);
 ```
-id INT PRIMARY KEY AUTO_INCREMENT
-room_id INT
-sender_id INT
-message TEXT
-created_at TIMESTAMP
+
+## full schema
+
+```sql
+CREATE TABLE users (
+ id INT AUTO_INCREMENT PRIMARY KEY,
+ name VARCHAR(100),
+ email VARCHAR(255) UNIQUE,
+ password VARCHAR(255),
+ created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE rooms (
+ id INT AUTO_INCREMENT PRIMARY KEY,
+ name VARCHAR(100),
+ created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE messages (
+ id INT AUTO_INCREMENT PRIMARY KEY,
+ room_id INT,
+ sender_id INT,
+ message TEXT,
+ created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+ FOREIGN KEY (room_id) REFERENCES rooms(id),
+ FOREIGN KEY (sender_id) REFERENCES users(id)
+);
 ```
 
 ---
 
-# Real-Time Communication Flow
+# Docker Setup
+
+## Backend Dockerfile
+
+backend/Dockerfile
+
+```dockerfile
+FROM node:20-alpine
+
+WORKDIR /app
+
+COPY package*.json ./
+
+RUN npm install
+
+COPY . .
+
+EXPOSE 5000
+
+CMD ["npm","run","dev"]
+```
+
+---
+
+# Docker Compose
+
+docker-compose.yml
+
+```yaml
+version: "3.9"
+
+services:
+
+  backend:
+    build: ./backend
+    container_name: chat-backend
+    ports:
+      - "5000:5000"
+    environment:
+      DB_HOST: mysql
+      DB_USER: chatuser
+      DB_PASSWORD: chatpassword
+      DB_NAME: chatdb
+      REDIS_HOST: redis
+    depends_on:
+      - mysql
+      - redis
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+
+  mysql:
+    image: mysql:8
+    container_name: chat-mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: chatdb
+      MYSQL_USER: chatuser
+      MYSQL_PASSWORD: chatpassword
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./database/schema.sql:/docker-entrypoint-initdb.d/schema.sql
+
+  redis:
+    image: redis:7
+    container_name: chat-redis
+    ports:
+      - "6379:6379"
+
+volumes:
+  mysql_data:
+```
+
+---
+
+# Running the Application
+
+Start all services:
+
+```bash
+docker compose up --build
+```
+
+Running containers:
+
+* backend
+* mysql
+* redis
+
+Backend API:
 
 ```
-Android App
-     │
-     │ REST API (Login/Register)
-     ▼
-Express Server
-     │
-     │ WebSocket
-     ▼
-Socket.IO
-     │
-     ▼
-Other Users
+http://localhost:5000
 ```
 
-Message flow:
+MySQL:
 
 ```
-User A → Socket.IO → Express → MySQL → Socket.IO → User B
+localhost:3306
 ```
+
+Redis:
+
+```
+localhost:6379
+```
+
+---
+
+# Android Configuration
+
+For Android emulator API calls use:
+
+```
+http://10.0.2.2:5000
+```
+
+This maps the emulator network to the host machine.
+
+---
+
+# Real-Time Messaging Flow
+
+1. User sends message from Android client.
+2. Message is emitted through Socket.IO.
+3. Backend receives event.
+4. Message is saved to MySQL.
+5. Event is published via Redis pub/sub.
+6. All connected servers broadcast message to users in the same room.
 
 ---
 
 # Features
 
-* User authentication (JWT)
-* Real-time messaging
+* User authentication
 * Chat rooms
-* Message history
-* Online / offline users
-* Typing indicator
-* Read receipts
-* Push notifications (optional)
-
----
-
-# Installation
-
-## Backend
-
-```
-cd backend
-npm install
-npm run dev
-```
-
-## Android
-
-Open the `mobile` folder using **Android Studio** and run the project.
+* Real-time messaging
+* Persistent message history
+* Redis pub/sub synchronization
+* WebSocket communication
+* Scalable backend architecture
+* Dockerized services
 
 ---
 
 # Future Improvements
 
 * Media messages (images, files)
-* Voice messages
-* Video calling
-* End-to-end encryption
+* Push notifications
+* Typing indicators
+* Read receipts
+* Online/offline presence
 * Message reactions
-* Dark mode UI
+* Message encryption
+* Load balancer support
 
 ---
 
