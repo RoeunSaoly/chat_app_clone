@@ -11,6 +11,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp // Added correct import
 import com.example.chat_app_clone.ui.theme.Chat_app_cloneTheme
 import io.socket.client.Socket
 import android.util.Log
@@ -38,10 +39,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             Chat_app_cloneTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting(
-                        name = "Android",
-                        modifier = Modifier.padding(innerPadding)
-                    )
+                    WelcomeCarousel(modifier = Modifier.padding(innerPadding))
                 }
             }
         }
@@ -49,17 +47,18 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
+fun WelcomeCarousel(modifier: Modifier = Modifier) {
     Text(
-        text = "Hello $name!",
-        modifier = modifier
+        text = "Welcome to Chat App\nConnect with your friends easily.",
+        // FIXED: Use 16.dp directly
+        modifier = modifier.padding(16.dp)
     )
 }
 
 @Preview(showBackground = true)
 @Composable
-fun GreetingPreview() {
+fun CarouselPreview() {
     Chat_app_cloneTheme {
-        Greeting("Android")
+        WelcomeCarousel()
     }
 }
