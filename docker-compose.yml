@@ -1,0 +1,44 @@
+services:
+
+  backend:
+    build: ./backend
+    container_name: chat-backend
+    ports:
+      - "5000:5000"
+    environment:
+      DB_HOST: MySQL80
+      DB_USER: root
+      DB_PASSWORD: 1111
+      DB_NAME: chat_app_db
+      REDIS_HOST: redis
+    depends_on:
+      - mysql
+      - redis
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+
+  mysql:
+    image: mysql:8
+    container_name: chat-container
+    restart: always
+    environment:
+      MYSQL_DATABASE: chat_app_db
+      MYSQL_ROOT_PASSWORD: 1111
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./database/schema.sql:/docker-entrypoint-initdb.d/schema.sql
+
+  redis:
+    image: redis:7
+    container_name: chat-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - ./docker/redis/redis.conf:/etc/redis/redis.conf
+    command: redis-server /etc/redis/redis.conf
+
+volumes:
+  mysql_data:
