@@ -1,10 +1,22 @@
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-import { createUser, findUserByEmail } from "./auth.model.js";
+import { createUser, findUserByEmail, findUserByUsername } from "./auth.model.js";
 
 export const register = async (req, res) => {
     try {
         const { username, email, password } = req.body;
+
+        // Check if username already exists
+        const existingUsername = await findUserByUsername(username);
+        if (existingUsername) {
+            return res.status(400).json({ error: "Username already taken" });
+        }
+
+        // Check if email already exists
+        const existingEmail = await findUserByEmail(email);
+        if (existingEmail) {
+            return res.status(400).json({ error: "Email already registered" });
+        }
 
         const hashedPassword = await bcrypt.hash(password, 10);
 
