@@ -6,11 +6,13 @@ services:
     ports:
       - "5000:5000"
     environment:
-      DB_HOST: MySQL80
+      DB_HOST: chat-container
+      DB_PORT: 3306
       DB_USER: root
       DB_PASSWORD: 1111
       DB_NAME: chat_app_db
       REDIS_HOST: redis
+      PORT: 5000
     depends_on:
       - mysql
       - redis
@@ -26,7 +28,7 @@ services:
       MYSQL_DATABASE: chat_app_db
       MYSQL_ROOT_PASSWORD: 1111
     ports:
-      - "3307:3306"
+      - "3308:3306"
     volumes:
       - mysql_data:/var/lib/mysql
       - ./database/schema.sql:/docker-entrypoint-initdb.d/schema.sql

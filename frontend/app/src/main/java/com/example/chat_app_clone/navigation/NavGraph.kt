@@ -12,18 +12,30 @@ import com.example.chat_app_clone.ui.screens.*
 @Composable
 fun NavGraph(
     navController: NavHostController = rememberNavController(),
-    startDestination: String = Screen.Login.route
+    startDestination: String = Screen.Welcome.route
 ) {
     NavHost(
         navController = navController,
         startDestination = startDestination
     ) {
+        // Welcome screen
+        composable(Screen.Welcome.route) {
+            WelcomeScreen(
+                onLoginClick = {
+                    navController.navigate(Screen.Login.route)
+                },
+                onRegisterClick = {
+                    navController.navigate(Screen.Register.route)
+                }
+            )
+        }
+
         // Login screen
         composable(Screen.Login.route) {
             LoginScreen(
                 onLoginSuccess = {
                     navController.navigate(Screen.Home.route) {
-                        popUpTo(Screen.Login.route) { inclusive = true }
+                        popUpTo(Screen.Welcome.route) { inclusive = true }
                     }
                 },
                 onNavigateToRegister = {
@@ -37,7 +49,7 @@ fun NavGraph(
             RegisterScreen(
                 onRegisterSuccess = {
                     navController.navigate(Screen.Home.route) {
-                        popUpTo(Screen.Login.route) { inclusive = true }
+                        popUpTo(Screen.Welcome.route) { inclusive = true }
                     }
                 },
                 onBackToLogin = {
@@ -59,6 +71,11 @@ fun NavGraph(
                 },
                 onCallsTabClick = {
                     navController.navigate(Screen.Calls.route)
+                },
+                onLogoutClick = {
+                    navController.navigate(Screen.Welcome.route) {
+                        popUpTo(0) { inclusive = true }
+                    }
                 }
             )
         }

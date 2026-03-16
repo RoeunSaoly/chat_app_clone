@@ -31,7 +31,8 @@ import com.example.chat_app_clone.ui.theme.MessengerGradientStart
 fun HomeScreen(
     onConversationClick: (Conversation) -> Unit = {},
     onSearchClick: () -> Unit = {},
-    onCallsTabClick: () -> Unit = {}
+    onCallsTabClick: () -> Unit = {},
+    onLogoutClick: () -> Unit = {}
 ) {
     var selectedTab by remember { mutableIntStateOf(0) }
 
@@ -82,6 +83,23 @@ fun HomeScreen(
                         )
                     }
                     Spacer(modifier = Modifier.width(12.dp))
+                    // Logout icon
+                    Box(
+                        modifier = Modifier
+                            .size(36.dp)
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.surfaceVariant)
+                            .clickable { onLogoutClick() },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            Icons.Default.Logout,
+                            contentDescription = "Logout",
+                            modifier = Modifier.size(20.dp),
+                            tint = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(8.dp))
                     // Avatar
                     UserAvatar(
                         name = SampleData.currentUser.name,

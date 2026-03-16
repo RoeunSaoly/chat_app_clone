@@ -1,4 +1,4 @@
-package com.example.chat_app_clone
+package com.example.chat_app_clone.network
 
 import io.socket.client.IO
 import io.socket.client.Socket
