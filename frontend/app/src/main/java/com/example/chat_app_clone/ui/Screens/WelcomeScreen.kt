@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -13,12 +14,19 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.example.chat_app_clone.R
+import com.example.chat_app_clone.ui.theme.MessengerBlue
 import kotlinx.coroutines.launch
 
 @Composable
-fun WelcomeCarousel() {
+fun WelcomeScreen(
+    onLoginClick: () -> Unit = {},
+    onRegisterClick: () -> Unit = {}
+) {
     // FIX 1: Explicitly define the type as List<Int> to solve "Cannot infer type"
     // FIX 2: Ensure welcome1, welcome2, welcome3 exist in res/drawable!
     val images: List<Int> = listOf(
@@ -80,7 +88,7 @@ fun WelcomeCarousel() {
             }
         }
 
-        // FIX 3: Changed 'Material3Theme' to 'MaterialTheme' (the correct Compose name)
+        // Page indicators
         Row(
             Modifier
                 .height(50.dp)
@@ -102,6 +110,69 @@ fun WelcomeCarousel() {
                         .background(color)
                 )
             }
+        }
+
+        // Welcome message and buttons
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = "Welcome to Messenger",
+                fontSize = 28.sp,
+                fontWeight = FontWeight.Bold,
+                color = MessengerBlue,
+                textAlign = TextAlign.Center
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Text(
+                text = "Connect with friends and family",
+                fontSize = 16.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center
+            )
+
+            Spacer(modifier = Modifier.height(32.dp))
+
+            // Login Button
+            Button(
+                onClick = onLoginClick,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(50.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = MessengerBlue),
+                shape = RoundedCornerShape(24.dp)
+            ) {
+                Text(
+                    text = "Log In",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Register Button
+            OutlinedButton(
+                onClick = onRegisterClick,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(50.dp),
+                shape = RoundedCornerShape(24.dp)
+            ) {
+                Text(
+                    text = "Sign Up",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MessengerBlue
+                )
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
         }
     }
 }
