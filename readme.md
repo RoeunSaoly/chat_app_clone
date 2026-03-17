@@ -1,9 +1,9 @@
 # Real-Time Chat Application
 
-A scalable **real-time chat application** built with an Android client and a Node.js backend.
-The system supports real-time messaging, authentication, chat rooms, and persistent message storage.
+A scalable **real-time chat application** built with an **Android client** and a **Node.js backend**.
+The system supports **real-time messaging, authentication, chat rooms, and persistent message storage**.
 
-The architecture is designed for **scalability**, using Redis pub/sub to synchronize messages across multiple backend instances.
+The architecture is designed for **scalability and maintainability**, using **Redis Pub/Sub** to synchronize messages across multiple backend instances and **Docker** for containerized infrastructure.
 
 ---
 
@@ -11,28 +11,30 @@ The architecture is designed for **scalability**, using Redis pub/sub to synchro
 
 ## Mobile (Android)
 
-* Kotlin
-* Jetpack Compose
-* Retrofit (REST API client)
-* Socket.IO client (WebSocket communication)
+* **Kotlin**
+* **Jetpack Compose**
+* **MVVM Architecture**
+* **Retrofit** (REST API client)
+* **Socket.IO Client** (real-time communication)
 
 ## Backend
 
-* Node.js
-* Express.js
-* Socket.IO
+* **Node.js**
+* **Express.js**
+* **Socket.IO**
 
 ## Infrastructure
 
-* Redis (pub/sub message broker)
-* MySQL (persistent database)
-* Docker & Docker Compose
+* **PostgreSQL** (persistent database)
+* **pgAdmin** (database management)
+* **Redis** (pub/sub message broker)
+* **Docker & Docker Compose**
 
 ---
 
 # Architecture Overview
 
-```text
+```
 Android Client
       │
       │ REST API (Authentication, Users, Rooms)
@@ -50,16 +52,16 @@ Redis Pub/Sub
 Multiple Backend Instances
       │
       ▼
-MySQL Database
+PostgreSQL Database
 ```
 
-Redis ensures that messages are synchronized between backend instances when scaling horizontally.
+**Redis Pub/Sub** ensures that messages are synchronized between backend instances when scaling horizontally.
 
 ---
 
 # Project Structure
 
-```text
+```
 realtime-chat-app/
 │
 ├── backend/
@@ -67,34 +69,41 @@ realtime-chat-app/
 │   ├── src/
 │   │   │
 │   │   ├── config/
-│   │   │   ├── db.js
-│   │   │   ├── redis.js
-│   │   │   └── socket.js
-│   │   │
-│   │   ├── controllers/
-│   │   │   ├── authController.js
-│   │   │   └── chatController.js
-│   │   │
-│   │   ├── services/
-│   │   │   ├── authService.js
-│   │   │   └── chatService.js
-│   │   │
-│   │   ├── models/
-│   │   │   ├── userModel.js
-│   │   │   ├── roomModel.js
-│   │   │   └── messageModel.js
+│   │   │   ├── database.js
+│   │   │   └── redis.js
 │   │   │
 │   │   ├── routes/
-│   │   │   ├── authRoutes.js
-│   │   │   └── chatRoutes.js
+│   │   │   ├── auth.routes.js
+│   │   │   ├── user.routes.js
+│   │   │   ├── room.routes.js
+│   │   │   └── message.routes.js
+│   │   │
+│   │   ├── controllers/
+│   │   │   ├── auth.controller.js
+│   │   │   ├── user.controller.js
+│   │   │   ├── room.controller.js
+│   │   │   └── message.controller.js
+│   │   │
+│   │   ├── services/
+│   │   │   ├── auth.service.js
+│   │   │   ├── user.service.js
+│   │   │   ├── room.service.js
+│   │   │   └── message.service.js
+│   │   │
+│   │   ├── models/
+│   │   │   ├── user.model.js
+│   │   │   ├── room.model.js
+│   │   │   └── message.model.js
 │   │   │
 │   │   ├── sockets/
-│   │   │   └── chatSocket.js
+│   │   │   └── chat.socket.js
 │   │   │
 │   │   ├── middleware/
-│   │   │   └── authMiddleware.js
+│   │   │   ├── auth.middleware.js
+│   │   │   └── error.middleware.js
 │   │   │
 │   │   ├── utils/
+│   │   │   ├── jwt.js
 │   │   │   └── logger.js
 │   │   │
 │   │   └── app.js
@@ -109,6 +118,7 @@ realtime-chat-app/
 │   └── app/src/main/java/com/chatapp/
 │       │
 │       ├── data/
+│       │   │
 │       │   ├── api/
 │       │   │   ├── ApiService.kt
 │       │   │   └── SocketClient.kt
@@ -122,7 +132,8 @@ realtime-chat-app/
 │       │       └── ChatRepository.kt
 │       │
 │       ├── ui/
-│       │   ├── screen/
+│       │   │
+│       │   ├── screens/
 │       │   │   ├── LoginScreen.kt
 │       │   │   ├── ChatListScreen.kt
 │       │   │   └── ChatRoomScreen.kt
@@ -135,7 +146,11 @@ realtime-chat-app/
 │       │       └── Theme.kt
 │       │
 │       ├── viewmodel/
+│       │   ├── AuthViewModel.kt
 │       │   └── ChatViewModel.kt
+│       │
+│       ├── navigation/
+│       │   └── NavGraph.kt
 │       │
 │       └── MainActivity.kt
 │
@@ -152,69 +167,41 @@ realtime-chat-app/
 
 ---
 
-# Database Schema
+# Database Schema (PostgreSQL)
 
-## users
-
-```sql
-CREATE TABLE users (
- id INT AUTO_INCREMENT PRIMARY KEY,
- name VARCHAR(100),
- email VARCHAR(255) UNIQUE,
- password VARCHAR(255),
- created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-```
-
-## rooms
-
-```sql
-CREATE TABLE rooms (
- id INT AUTO_INCREMENT PRIMARY KEY,
- name VARCHAR(100),
- created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-```
-
-## messages
-
-```sql
-CREATE TABLE messages (
- id INT AUTO_INCREMENT PRIMARY KEY,
- room_id INT,
- sender_id INT,
- message TEXT,
- created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
- FOREIGN KEY (room_id) REFERENCES rooms(id),
- FOREIGN KEY (sender_id) REFERENCES users(id)
-);
-```
-
-## full schema
+## Users Table
 
 ```sql
 CREATE TABLE users (
- id INT AUTO_INCREMENT PRIMARY KEY,
- name VARCHAR(100),
- email VARCHAR(255) UNIQUE,
- password VARCHAR(255),
- created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  id SERIAL PRIMARY KEY,
+  name VARCHAR(100),
+  email VARCHAR(255) UNIQUE,
+  password VARCHAR(255),
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+```
 
+## Rooms Table
+
+```sql
 CREATE TABLE rooms (
- id INT AUTO_INCREMENT PRIMARY KEY,
- name VARCHAR(100),
- created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  id SERIAL PRIMARY KEY,
+  name VARCHAR(100),
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+```
 
+## Messages Table
+
+```sql
 CREATE TABLE messages (
- id INT AUTO_INCREMENT PRIMARY KEY,
- room_id INT,
- sender_id INT,
- message TEXT,
- created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
- FOREIGN KEY (room_id) REFERENCES rooms(id),
- FOREIGN KEY (sender_id) REFERENCES users(id)
+  id SERIAL PRIMARY KEY,
+  room_id INT,
+  sender_id INT,
+  message TEXT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (room_id) REFERENCES rooms(id),
+  FOREIGN KEY (sender_id) REFERENCES users(id)
 );
 ```
 
@@ -224,7 +211,9 @@ CREATE TABLE messages (
 
 ## Backend Dockerfile
 
+```
 backend/Dockerfile
+```
 
 ```dockerfile
 FROM node:20-alpine
@@ -246,7 +235,9 @@ CMD ["npm","run","dev"]
 
 # Docker Compose
 
+```
 docker-compose.yml
+```
 
 ```yaml
 version: "3.9"
@@ -259,32 +250,43 @@ services:
     ports:
       - "5000:5000"
     environment:
-      DB_HOST: mysql
+      DB_HOST: postgres
       DB_USER: chatuser
       DB_PASSWORD: chatpassword
       DB_NAME: chatdb
       REDIS_HOST: redis
     depends_on:
-      - mysql
+      - postgres
       - redis
     volumes:
       - ./backend:/app
       - /app/node_modules
 
-  mysql:
-    image: mysql:8
-    container_name: chat-mysql
+  postgres:
+    image: postgres:15
+    container_name: chat-postgres
     restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: rootpassword
-      MYSQL_DATABASE: chatdb
-      MYSQL_USER: chatuser
-      MYSQL_PASSWORD: chatpassword
+      POSTGRES_DB: chatdb
+      POSTGRES_USER: chatuser
+      POSTGRES_PASSWORD: chatpassword
     ports:
-      - "3306:3306"
+      - "5432:5432"
     volumes:
-      - mysql_data:/var/lib/mysql
+      - postgres_data:/var/lib/postgresql/data
       - ./database/schema.sql:/docker-entrypoint-initdb.d/schema.sql
+
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: chat-pgadmin
+    restart: always
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@chat.com
+      PGADMIN_DEFAULT_PASSWORD: admin123
+    ports:
+      - "5050:80"
+    depends_on:
+      - postgres
 
   redis:
     image: redis:7
@@ -293,7 +295,7 @@ services:
       - "6379:6379"
 
 volumes:
-  mysql_data:
+  postgres_data:
 ```
 
 ---
@@ -309,8 +311,13 @@ docker compose up --build
 Running containers:
 
 * backend
-* mysql
+* postgres
+* pgadmin
 * redis
+
+---
+
+# Access Services
 
 Backend API:
 
@@ -318,10 +325,23 @@ Backend API:
 http://localhost:5000
 ```
 
-MySQL:
+PostgreSQL:
 
 ```
-localhost:3306
+localhost:5432
+```
+
+pgAdmin:
+
+```
+http://localhost:5050
+```
+
+Login credentials:
+
+```
+email: admin@chat.com
+password: admin123
 ```
 
 Redis:
@@ -334,7 +354,7 @@ localhost:6379
 
 # Android Configuration
 
-For Android emulator API calls use:
+When using an **Android Emulator**, the API base URL should be:
 
 ```
 http://10.0.2.2:5000
@@ -346,12 +366,12 @@ This maps the emulator network to the host machine.
 
 # Real-Time Messaging Flow
 
-1. User sends message from Android client.
-2. Message is emitted through Socket.IO.
-3. Backend receives event.
-4. Message is saved to MySQL.
-5. Event is published via Redis pub/sub.
-6. All connected servers broadcast message to users in the same room.
+1. User sends a message from the Android client.
+2. Message is emitted through **Socket.IO**.
+3. Backend receives the event.
+4. Message is stored in **PostgreSQL**.
+5. Message is published via **Redis Pub/Sub**.
+6. All backend instances broadcast the message to users in the same room.
 
 ---
 
@@ -363,8 +383,9 @@ This maps the emulator network to the host machine.
 * Persistent message history
 * Redis pub/sub synchronization
 * WebSocket communication
-* Scalable backend architecture
-* Dockerized services
+* Dockerized infrastructure
+* PostgreSQL database
+* Android MVVM architecture
 
 ---
 
@@ -376,8 +397,9 @@ This maps the emulator network to the host machine.
 * Read receipts
 * Online/offline presence
 * Message reactions
-* Message encryption
+* End-to-end encryption
 * Load balancer support
+* Message search
 
 ---
 
