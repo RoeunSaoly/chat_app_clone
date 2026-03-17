@@ -3,7 +3,7 @@ import dotenv from "dotenv";
 import { connectDB } from "./src/config/db.js";
 import http from "http";
 import { Server } from "socket.io";
-import chatSocket from "./src/sockets/chat.Socket.js";
+import chatSocket from "./src/plugin/chat.Socket.js";
 
 dotenv.config();
 
