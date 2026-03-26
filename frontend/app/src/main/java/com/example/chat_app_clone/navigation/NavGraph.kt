@@ -1,6 +1,7 @@
 package com.example.chat_app_clone.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -12,21 +13,19 @@ import com.example.chat_app_clone.ui.screens.*
 @Composable
 fun NavGraph(
     navController: NavHostController = rememberNavController(),
-    startDestination: String = Screen.Welcome.route
+    startDestination: String = Screen.Welcome.route,
+    modifier: Modifier = Modifier // ✅ added modifier parameter
 ) {
     NavHost(
         navController = navController,
-        startDestination = startDestination
+        startDestination = startDestination,
+        modifier = modifier // ✅ forward modifier into NavHost
     ) {
         // Welcome screen
         composable(Screen.Welcome.route) {
             WelcomeScreen(
-                onLoginClick = {
-                    navController.navigate(Screen.Login.route)
-                },
-                onRegisterClick = {
-                    navController.navigate(Screen.Register.route)
-                }
+                onLoginClick = { navController.navigate(Screen.Login.route) },
+                onRegisterClick = { navController.navigate(Screen.Register.route) }
             )
         }
 
@@ -38,9 +37,7 @@ fun NavGraph(
                         popUpTo(Screen.Welcome.route) { inclusive = true }
                     }
                 },
-                onNavigateToRegister = {
-                    navController.navigate(Screen.Register.route)
-                }
+                onNavigateToRegister = { navController.navigate(Screen.Register.route) }
             )
         }
 
@@ -52,9 +49,7 @@ fun NavGraph(
                         popUpTo(Screen.Welcome.route) { inclusive = true }
                     }
                 },
-                onBackToLogin = {
-                    navController.popBackStack()
-                }
+                onBackToLogin = { navController.popBackStack() }
             )
         }
 
@@ -66,12 +61,8 @@ fun NavGraph(
                         Screen.Chat.createRoute(conversation.id, conversation.otherUser.id)
                     )
                 },
-                onSearchClick = {
-                    navController.navigate(Screen.Search.route)
-                },
-                onCallsTabClick = {
-                    navController.navigate(Screen.Calls.route)
-                },
+                onSearchClick = { navController.navigate(Screen.Search.route) },
+                onCallsTabClick = { navController.navigate(Screen.Calls.route) },
                 onLogoutClick = {
                     navController.navigate(Screen.Welcome.route) {
                         popUpTo(0) { inclusive = true }
@@ -101,9 +92,7 @@ fun NavGraph(
         // Profile screen
         composable(
             route = Screen.Profile.route,
-            arguments = listOf(
-                navArgument("userId") { type = NavType.StringType }
-            )
+            arguments = listOf(navArgument("userId") { type = NavType.StringType })
         ) { backStackEntry ->
             val userId = backStackEntry.arguments?.getString("userId") ?: ""
             ProfileScreen(
