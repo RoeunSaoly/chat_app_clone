@@ -18,17 +18,20 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.chat_app_clone.data.SampleData
 import com.example.chat_app_clone.data.model.User
 import com.example.chat_app_clone.ui.components.UserAvatar
-import com.example.chat_app_clone.ui.theme.MessengerBlue
 import com.example.chat_app_clone.ui.theme.OnlineGreen
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SearchScreen(onBack: () -> Unit = {}) {
+fun SearchScreen(
+    onBack: () -> Unit = {},
+    onUserClick: (User) -> Unit = {}
+) {
     var query by remember { mutableStateOf("") }
 
     val filteredUsers = remember(query) {
@@ -61,52 +64,68 @@ fun SearchScreen(onBack: () -> Unit = {}) {
                         containerColor = MaterialTheme.colorScheme.surface
                     )
                 )
-                // Search bar
+                // Search bar with Cancel button
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 8.dp)
-                        .clip(RoundedCornerShape(24.dp))
-                        .background(MaterialTheme.colorScheme.surfaceVariant)
-                        .padding(horizontal = 16.dp, vertical = 10.dp),
+                        .padding(start = 16.dp, end = 4.dp, top = 8.dp, bottom = 8.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Icon(
-                        Icons.Default.Search,
-                        contentDescription = "Search",
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.size(20.dp)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    BasicTextField(
-                        value = query,
-                        onValueChange = { query = it },
-                        textStyle = LocalTextStyle.current.copy(
-                            color = MaterialTheme.colorScheme.onSurface,
-                            fontSize = 15.sp
-                        ),
-                        modifier = Modifier.weight(1f),
-                        singleLine = true,
-                        decorationBox = { inner ->
-                            if (query.isEmpty()) {
-                                Text(
-                                    "Search people & chats",
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    fontSize = 15.sp
+                    Row(
+                        modifier = Modifier
+                            .weight(1f)
+                            .clip(RoundedCornerShape(24.dp))
+                            .background(MaterialTheme.colorScheme.surfaceVariant)
+                            .padding(horizontal = 16.dp, vertical = 10.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            Icons.Default.Search,
+                            contentDescription = "Search",
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        BasicTextField(
+                            value = query,
+                            onValueChange = { query = it },
+                            textStyle = LocalTextStyle.current.copy(
+                                color = MaterialTheme.colorScheme.onSurface,
+                                fontSize = 15.sp
+                            ),
+                            modifier = Modifier.weight(1f),
+                            singleLine = true,
+                            decorationBox = { inner ->
+                                if (query.isEmpty()) {
+                                    Text(
+                                        "Search people & chats",
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        fontSize = 15.sp
+                                    )
+                                }
+                                inner()
+                            }
+                        )
+                        if (query.isNotEmpty()) {
+                            IconButton(onClick = { query = "" }, modifier = Modifier.size(20.dp)) {
+                                Icon(
+                                    Icons.Default.Close,
+                                    contentDescription = "Clear",
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.size(16.dp)
                                 )
                             }
-                            inner()
                         }
-                    )
-                    if (query.isNotEmpty()) {
-                        IconButton(onClick = { query = "" }, modifier = Modifier.size(20.dp)) {
-                            Icon(
-                                Icons.Default.Close,
-                                contentDescription = "Clear",
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier.size(16.dp)
-                            )
-                        }
+                    }
+                    TextButton(
+                        onClick = onBack,
+                        contentPadding = PaddingValues(horizontal = 12.dp)
+                    ) {
+                        Text(
+                            "Cancel",
+                            fontSize = 16.sp,
+                            color = MaterialTheme.colorScheme.primary
+                        )
                     }
                 }
             }
@@ -131,7 +150,8 @@ fun SearchScreen(onBack: () -> Unit = {}) {
                     SearchResultRow(
                         name = conv.otherUser.name,
                         subtitle = conv.lastMessage,
-                        user = conv.otherUser
+                        user = conv.otherUser,
+                        onClick = { onUserClick(conv.otherUser) }
                     )
                 }
             }
@@ -151,7 +171,8 @@ fun SearchScreen(onBack: () -> Unit = {}) {
                     name = user.name,
                     subtitle = if (user.isOnline) "Active now" else "Active ${user.lastSeen}",
                     user = user,
-                    showOnline = user.isOnline
+                    showOnline = user.isOnline,
+                    onClick = { onUserClick(user) }
                 )
             }
         }
@@ -163,12 +184,13 @@ private fun SearchResultRow(
     name: String,
     subtitle: String,
     user: User,
-    showOnline: Boolean = false
+    showOnline: Boolean = false,
+    onClick: () -> Unit = {}
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable {}
+            .clickable { onClick() }
             .padding(horizontal = 16.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -217,4 +239,10 @@ private fun SearchResultRow(
             modifier = Modifier.size(20.dp)
         )
     }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun SearchScreenPreview () {
+    SearchScreen()
 }

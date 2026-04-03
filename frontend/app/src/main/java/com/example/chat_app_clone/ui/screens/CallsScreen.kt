@@ -1,19 +1,19 @@
 package com.example.chat_app_clone.ui.screens
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.CallMade
+import androidx.compose.material.icons.automirrored.filled.CallReceived
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.chat_app_clone.data.SampleData
@@ -108,7 +108,7 @@ private fun CallRecordItem(call: SampleData.CallRecord) {
             Spacer(modifier = Modifier.height(2.dp))
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(
-                    imageVector = if (isOutgoing) Icons.Default.CallMade else Icons.Default.CallReceived,
+                    imageVector = if (isOutgoing) Icons.AutoMirrored.Filled.CallMade else Icons.AutoMirrored.Filled.CallReceived,
                     contentDescription = null,
                     tint = if (isMissed) ErrorRed else OnlineGreen,
                     modifier = Modifier.size(14.dp)
@@ -141,3 +141,10 @@ private fun CallRecordItem(call: SampleData.CallRecord) {
         }
     }
 }
+
+@Preview(showBackground = true)
+@Composable
+fun CallsScreenPreview() {
+    CallsScreen()
+}
+

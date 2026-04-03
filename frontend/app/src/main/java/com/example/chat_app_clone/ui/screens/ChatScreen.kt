@@ -11,6 +11,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -19,15 +21,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.chat_app_clone.data.SampleData
-import com.example.chat_app_clone.data.model.Conversation
 import com.example.chat_app_clone.ui.components.MessageBubble
 import com.example.chat_app_clone.ui.components.UserAvatar
 import com.example.chat_app_clone.ui.theme.MessengerBlue
-import com.example.chat_app_clone.ui.theme.MessengerGradientEnd
-import com.example.chat_app_clone.ui.theme.MessengerGradientStart
 import com.example.chat_app_clone.ui.theme.OnlineGreen
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -38,7 +38,7 @@ fun ChatScreen(
     onBack: () -> Unit = {},
     onProfileClick: () -> Unit = {}
 ) {
-    val conversation = SampleData.conversations.find { it.id == conversationId }
+    //val conversation = SampleData.conversations.find { it.id == conversationId }
     val user = SampleData.users.find { it.id == userId } ?: SampleData.users.first()
     val messages = remember { SampleData.getMessagesForConversation(conversationId) }
     var inputText by remember { mutableStateOf("") }
@@ -99,7 +99,7 @@ fun ChatScreen(
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(
-                            Icons.Default.ArrowBack,
+                            Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Back",
                             tint = MessengerBlue
                         )
@@ -241,7 +241,7 @@ private fun ChatInputBar(
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
-                    imageVector = if (text.isNotEmpty()) Icons.Default.Send else Icons.Default.ThumbUp,
+                    imageVector = if (text.isNotEmpty()) Icons.AutoMirrored.Filled.Send else Icons.Default.ThumbUp,
                     contentDescription = if (text.isNotEmpty()) "Send" else "Like",
                     tint = if (text.isNotEmpty()) Color.White else MessengerBlue,
                     modifier = Modifier.size(20.dp)
@@ -249,4 +249,10 @@ private fun ChatInputBar(
             }
         }
     }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun ChatScreenPreview() {
+    ChatScreen(conversationId = "c1", userId = "1")
 }

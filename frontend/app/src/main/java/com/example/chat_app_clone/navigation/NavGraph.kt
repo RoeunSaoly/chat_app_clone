@@ -7,6 +7,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.example.chat_app_clone.data.SampleData
 import com.example.chat_app_clone.ui.screens.*
 
 @Composable
@@ -115,7 +116,16 @@ fun NavGraph(
 
         // Search screen
         composable(Screen.Search.route) {
-            SearchScreen(onBack = { navController.popBackStack() })
+            SearchScreen(
+                onBack = { navController.popBackStack() },
+                onUserClick = { user ->
+                    val conversation = SampleData.conversations.find { it.otherUser.id == user.id }
+                    val conversationId = conversation?.id ?: "new_${user.id}"
+                    navController.navigate(
+                        Screen.Chat.createRoute(conversationId, user.id)
+                    )
+                }
+            )
         }
 
         // Calls screen
