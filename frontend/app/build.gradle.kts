@@ -6,12 +6,12 @@ plugins {
 
 android {
     namespace = "com.example.chat_app_clone"
-    compileSdk = 35 // FIXED: Changed from 36 to 35
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.example.chat_app_clone"
         minSdk = 26
-        targetSdk = 35 // FIXED: Changed from 36 to 35
+        targetSdk = 35
         versionCode = 1
         versionName = "1.0"
 
@@ -27,6 +27,7 @@ android {
             )
         }
     }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
@@ -40,6 +41,7 @@ android {
 }
 
 dependencies {
+    // AndroidX + Compose
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
     implementation(platform(libs.androidx.compose.bom))
@@ -51,6 +53,7 @@ dependencies {
     implementation(libs.androidx.navigation.compose)
     implementation(libs.coil.compose)
 
+    // Testing
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -58,6 +61,8 @@ dependencies {
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
+
+    // Networking
     implementation("io.socket:socket.io-client:2.1.1")
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
     implementation("com.squareup.retrofit2:converter-gson:2.9.0")
