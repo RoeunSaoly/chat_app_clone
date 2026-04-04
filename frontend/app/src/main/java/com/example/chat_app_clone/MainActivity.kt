@@ -7,11 +7,13 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
-import com.example.chat_app_clone.navigation.NavGraph
-import com.example.chat_app_clone.network.SocketManager
+import androidx.compose.ui.unit.dp
 import com.example.chat_app_clone.ui.theme.Chat_app_cloneTheme
 import io.socket.client.Socket
 import android.util.Log
+
+import com.example.chat_app_clone.navigation.NavGraph
+import com.example.chat_app_clone.navigation.Screen
 
 class MainActivity : ComponentActivity() {
     private val socketManager = SocketManager()
@@ -35,7 +37,11 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             Chat_app_cloneTheme {
-                NavGraph()
+                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
+                    androidx.compose.foundation.layout.Box(modifier = Modifier.padding(innerPadding)) {
+                        NavGraph(startDestination = Screen.Profile.createRoute("1"))
+                    }
+                }
             }
         }
     }

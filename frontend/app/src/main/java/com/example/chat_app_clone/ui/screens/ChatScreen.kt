@@ -19,6 +19,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -27,8 +28,6 @@ import androidx.compose.ui.unit.sp
 import com.example.chat_app_clone.data.SampleData
 import com.example.chat_app_clone.ui.components.MessageBubble
 import com.example.chat_app_clone.ui.components.UserAvatar
-import com.example.chat_app_clone.ui.theme.MessengerBlue
-import com.example.chat_app_clone.ui.theme.OnlineGreen
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -50,119 +49,79 @@ fun ChatScreen(
         }
     }
 
-    Scaffold(
-        containerColor = MaterialTheme.colorScheme.background,
-        topBar = {
-            TopAppBar(
-                title = {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.clickable(onClick = onProfileClick)
-                    ) {
-                        Box {
-                            UserAvatar(name = user.name, size = 40)
-                            if (user.isOnline) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(12.dp)
-                                        .align(Alignment.BottomEnd)
-                                        .clip(CircleShape)
-                                        .background(MaterialTheme.colorScheme.surface)
-                                        .padding(2.dp)
-                                ) {
-                                    Box(
-                                        modifier = Modifier
-                                            .fillMaxSize()
-                                            .clip(CircleShape)
-                                            .background(OnlineGreen)
-                                    )
-                                }
-                            }
-                        }
-                        Spacer(modifier = Modifier.width(10.dp))
-                        Column {
-                            Text(
-                                text = user.name,
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 16.sp,
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
-                            Text(
-                                text = if (user.isOnline) "Active now" else "Active ${user.lastSeen}",
-                                fontSize = 12.sp,
-                                color = if (user.isOnline) OnlineGreen
-                                else MaterialTheme.colorScheme.onSurfaceVariant
+    // Beautiful Pastel Gradient Background
+    val backgroundBrush = Brush.verticalGradient(
+        colors = listOf(
+            Color(0xFFFDE8ED), // Top lighter pink
+            Color(0xFFE2C4D3)  // Bottom deeper pastel
+        )
+    )
+
+    Box(modifier = Modifier.fillMaxSize().background(backgroundBrush)) {
+        Scaffold(
+            containerColor = Color.Transparent,
+            topBar = {
+                TopAppBar(
+                    title = {
+                        Text(
+                            text = user.name + " \uD83C\uDF38", // Add emoji for that cute feel
+                            fontWeight = FontWeight.Medium,
+                            fontSize = 18.sp,
+                            color = Color.Black,
+                            modifier = Modifier.fillMaxWidth().wrapContentWidth(Alignment.CenterHorizontally)
+                        )
+                    },
+                    navigationIcon = {
+                        IconButton(onClick = onBack) {
+                            Icon(
+                                Icons.Default.ArrowBack,
+                                contentDescription = "Back",
+                                tint = Color.Black
                             )
                         }
-                    }
-                },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(
-                            Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back",
-                            tint = MessengerBlue
-                        )
-                    }
-                },
-                actions = {
-                    IconButton(onClick = {}) {
-                        Icon(
-                            Icons.Default.Call,
-                            contentDescription = "Voice call",
-                            tint = MessengerBlue,
-                            modifier = Modifier.size(22.dp)
-                        )
-                    }
-                    IconButton(onClick = {}) {
-                        Icon(
-                            Icons.Default.Videocam,
-                            contentDescription = "Video call",
-                            tint = MessengerBlue,
-                            modifier = Modifier.size(24.dp)
-                        )
-                    }
-                    IconButton(onClick = {}) {
-                        Icon(
-                            Icons.Default.Info,
-                            contentDescription = "Info",
-                            tint = MessengerBlue,
-                            modifier = Modifier.size(22.dp)
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface
+                    },
+                    actions = {
+                        IconButton(onClick = onProfileClick) {
+                            Icon(
+                                Icons.Default.MoreHoriz,
+                                contentDescription = "More",
+                                tint = Color.Black
+                            )
+                        }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = Color.Transparent
+                    )
                 )
-            )
-        },
-        bottomBar = {
-            ChatInputBar(
-                text = inputText,
-                onTextChange = { inputText = it },
-                onSend = { inputText = "" }
-            )
-        }
-    ) { paddingValues ->
-        LazyColumn(
-            state = listState,
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .padding(vertical = 8.dp),
-            verticalArrangement = Arrangement.spacedBy(2.dp)
-        ) {
-            items(messages) { message ->
-                val isOwn = message.senderId == "me"
-                val showAvatar = !isOwn
-                MessageBubble(
-                    message = message,
-                    isOwn = isOwn,
-                    showAvatar = showAvatar,
-                    senderName = user.name
+            },
+            bottomBar = {
+                ChatInputBar(
+                    text = inputText,
+                    onTextChange = { inputText = it },
+                    onSend = { inputText = "" }
                 )
             }
-            item { Spacer(modifier = Modifier.height(4.dp)) }
+        ) { paddingValues ->
+            LazyColumn(
+                state = listState,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                items(messages) { message ->
+                    val isOwn = message.senderId == "me"
+                    val showAvatar = !isOwn
+                    MessageBubble(
+                        message = message,
+                        isOwn = isOwn,
+                        showAvatar = showAvatar,
+                        senderName = user.name
+                    )
+                }
+                item { Spacer(modifier = Modifier.height(16.dp)) }
+            }
         }
     }
 }
@@ -173,80 +132,70 @@ private fun ChatInputBar(
     onTextChange: (String) -> Unit,
     onSend: () -> Unit
 ) {
-    Surface(
-        shadowElevation = 8.dp,
-        color = MaterialTheme.colorScheme.surface
+    // Floating Pill Input Bar
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .navigationBarsPadding()
+            .padding(horizontal = 16.dp, vertical = 12.dp)
+            .height(56.dp)
+            .clip(RoundedCornerShape(28.dp))
+            .background(Color.White)
+            .padding(horizontal = 8.dp),
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 8.dp, vertical = 8.dp)
-                .navigationBarsPadding(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // Attachment icons
-            IconButton(onClick = {}, modifier = Modifier.size(40.dp)) {
-                Icon(Icons.Default.Add, contentDescription = "Attach",
-                    tint = MessengerBlue, modifier = Modifier.size(22.dp))
-            }
-            IconButton(onClick = {}, modifier = Modifier.size(40.dp)) {
-                Icon(Icons.Default.CameraAlt, contentDescription = "Camera",
-                    tint = MessengerBlue, modifier = Modifier.size(22.dp))
-            }
-            IconButton(onClick = {}, modifier = Modifier.size(40.dp)) {
-                Icon(Icons.Default.Mic, contentDescription = "Voice",
-                    tint = MessengerBlue, modifier = Modifier.size(22.dp))
-            }
-            IconButton(onClick = {}, modifier = Modifier.size(40.dp)) {
-                Icon(Icons.Default.Image, contentDescription = "Gallery",
-                    tint = MessengerBlue, modifier = Modifier.size(22.dp))
-            }
-
-            // Text input
+        // Attachment Plus Button
+        IconButton(onClick = {}) {
             Box(
                 modifier = Modifier
-                    .weight(1f)
-                    .clip(RoundedCornerShape(24.dp))
-                    .background(MaterialTheme.colorScheme.surfaceVariant)
-                    .padding(horizontal = 16.dp, vertical = 4.dp),
-                contentAlignment = Alignment.CenterStart
-            ) {
-                if (text.isEmpty()) {
-                    Text("Aa", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 15.sp)
-                }
-                BasicTextField(
-                    value = text,
-                    onValueChange = onTextChange,
-                    textStyle = LocalTextStyle.current.copy(
-                        color = MaterialTheme.colorScheme.onSurface,
-                        fontSize = 15.sp
-                    ),
-                    modifier = Modifier.fillMaxWidth(),
-                    maxLines = 4
-                )
-            }
-
-            Spacer(modifier = Modifier.width(4.dp))
-
-            // Send button
-            Box(
-                modifier = Modifier
-                    .size(40.dp)
+                    .size(32.dp)
                     .clip(CircleShape)
-                    .background(
-                        if (text.isNotEmpty()) MessengerBlue
-                        else MaterialTheme.colorScheme.surfaceVariant
-                    )
-                    .clickable { if (text.isNotEmpty()) onSend() },
+                    .background(Color(0xFFF0F0F0)),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
-                    imageVector = if (text.isNotEmpty()) Icons.AutoMirrored.Filled.Send else Icons.Default.ThumbUp,
-                    contentDescription = if (text.isNotEmpty()) "Send" else "Like",
-                    tint = if (text.isNotEmpty()) Color.White else MessengerBlue,
+                    Icons.Default.Add, 
+                    contentDescription = "Attach",
+                    tint = Color.Black, 
                     modifier = Modifier.size(20.dp)
                 )
             }
+        }
+
+        Spacer(modifier = Modifier.width(8.dp))
+
+        // Text input
+        Box(
+            modifier = Modifier.weight(1f),
+            contentAlignment = Alignment.CenterStart
+        ) {
+            if (text.isEmpty()) {
+                Text("Type a message here...", color = Color.Gray.copy(alpha=0.7f), fontSize = 15.sp)
+            }
+            BasicTextField(
+                value = text,
+                onValueChange = onTextChange,
+                textStyle = LocalTextStyle.current.copy(
+                    color = Color.Black,
+                    fontSize = 15.sp
+                ),
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true
+            )
+        }
+
+        Spacer(modifier = Modifier.width(8.dp))
+
+        // Right Button (Mic or Send)
+        IconButton(
+            onClick = { if (text.isNotEmpty()) onSend() }
+        ) {
+            Icon(
+                imageVector = if (text.isNotEmpty()) Icons.Default.Send else Icons.Default.Mic,
+                contentDescription = if (text.isNotEmpty()) "Send" else "Voice",
+                tint = Color.Black,
+                modifier = Modifier.size(24.dp)
+            )
         }
     }
 }
