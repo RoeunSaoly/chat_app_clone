@@ -3,7 +3,7 @@ package com.example.chat_app_clone.ui.screens
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Person
@@ -18,6 +18,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.chat_app_clone.network.AuthService
@@ -49,7 +50,7 @@ fun RegisterScreen(
                 title = { Text("Create Account") },
                 navigationIcon = {
                     IconButton(onClick = onBackToLogin) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 }
             )
@@ -207,3 +208,10 @@ fun RegisterScreen(
         }
     }
 }
+
+@Preview(showBackground = true)
+@Composable
+fun RegisterScreenPreview() {
+    RegisterScreen()
+}
+
