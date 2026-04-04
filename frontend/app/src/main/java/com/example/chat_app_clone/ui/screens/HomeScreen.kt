@@ -1,6 +1,5 @@
 package com.example.chat_app_clone.ui.screens
 
-import androidx.compose.animation.*
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -8,30 +7,29 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.chat_app_clone.data.SampleData
 import com.example.chat_app_clone.data.model.Conversation
 import com.example.chat_app_clone.ui.components.*
 import com.example.chat_app_clone.ui.theme.MessengerBlue
-import com.example.chat_app_clone.ui.theme.MessengerGradientEnd
-import com.example.chat_app_clone.ui.theme.MessengerGradientStart
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
     onConversationClick: (Conversation) -> Unit = {},
     onSearchClick: () -> Unit = {},
-    onCallsTabClick: () -> Unit = {}
+    onCallsTabClick: () -> Unit = {},
+    onLogoutClick: () -> Unit = {}
 ) {
     var selectedTab by remember { mutableIntStateOf(0) }
 
@@ -82,6 +80,23 @@ fun HomeScreen(
                         )
                     }
                     Spacer(modifier = Modifier.width(12.dp))
+                    // Logout icon
+                    Box(
+                        modifier = Modifier
+                            .size(36.dp)
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.surfaceVariant)
+                            .clickable { onLogoutClick() },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            Icons.AutoMirrored.Filled.Logout,
+                            contentDescription = "Logout",
+                            modifier = Modifier.size(20.dp),
+                            tint = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(8.dp))
                     // Avatar
                     UserAvatar(
                         name = SampleData.currentUser.name,
@@ -186,4 +201,11 @@ fun HomeScreen(
             item { Spacer(modifier = Modifier.height(8.dp)) }
         }
     }
+}
+
+
+@Preview(showBackground = true)
+@Composable
+fun HomeScreenPreview() {
+    HomeScreen()
 }

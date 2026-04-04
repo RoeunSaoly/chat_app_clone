@@ -7,23 +7,36 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.example.chat_app_clone.data.SampleData
 import com.example.chat_app_clone.ui.screens.*
 
 @Composable
 fun NavGraph(
     navController: NavHostController = rememberNavController(),
-    startDestination: String = Screen.Login.route
+    startDestination: String = Screen.Welcome.route
 ) {
     NavHost(
         navController = navController,
         startDestination = startDestination
     ) {
+        // Welcome screen
+        composable(Screen.Welcome.route) {
+            WelcomeScreen(
+                onLoginClick = {
+                    navController.navigate(Screen.Login.route)
+                },
+                onRegisterClick = {
+                    navController.navigate(Screen.Register.route)
+                }
+            )
+        }
+
         // Login screen
         composable(Screen.Login.route) {
             LoginScreen(
                 onLoginSuccess = {
                     navController.navigate(Screen.Home.route) {
-                        popUpTo(Screen.Login.route) { inclusive = true }
+                        popUpTo(Screen.Welcome.route) { inclusive = true }
                     }
                 },
                 onNavigateToRegister = {
@@ -37,7 +50,7 @@ fun NavGraph(
             RegisterScreen(
                 onRegisterSuccess = {
                     navController.navigate(Screen.Home.route) {
-                        popUpTo(Screen.Login.route) { inclusive = true }
+                        popUpTo(Screen.Welcome.route) { inclusive = true }
                     }
                 },
                 onBackToLogin = {
@@ -59,6 +72,11 @@ fun NavGraph(
                 },
                 onCallsTabClick = {
                     navController.navigate(Screen.Calls.route)
+                },
+                onLogoutClick = {
+                    navController.navigate(Screen.Welcome.route) {
+                        popUpTo(0) { inclusive = true }
+                    }
                 }
             )
         }
@@ -98,7 +116,16 @@ fun NavGraph(
 
         // Search screen
         composable(Screen.Search.route) {
-            SearchScreen(onBack = { navController.popBackStack() })
+            SearchScreen(
+                onBack = { navController.popBackStack() },
+                onUserClick = { user ->
+                    val conversation = SampleData.conversations.find { it.otherUser.id == user.id }
+                    val conversationId = conversation?.id ?: "new_${user.id}"
+                    navController.navigate(
+                        Screen.Chat.createRoute(conversationId, user.id)
+                    )
+                }
+            )
         }
 
         // Calls screen

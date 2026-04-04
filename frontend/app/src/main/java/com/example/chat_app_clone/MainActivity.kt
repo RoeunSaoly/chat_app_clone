@@ -1,13 +1,9 @@
-package com.example.chat_app_clone
+package com.example.chat_app_clone;
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
@@ -53,17 +49,13 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun WelcomeCarousel(modifier: Modifier = Modifier) {
-    Text(
-        text = "Welcome to Chat App\nConnect with your friends easily.",
-        // FIXED: Use 16.dp directly
-        modifier = modifier.padding(16.dp)
-    )
+    // Navigation is handled by NavGraph
 }
 
 @Preview(showBackground = true)
 @Composable
-fun CarouselPreview() {
+fun MainActivityPreview() {
     Chat_app_cloneTheme {
-        WelcomeCarousel()
+        NavGraph()
     }
 }

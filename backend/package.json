@@ -8,7 +8,9 @@
   "main": "server.js",
   "scripts": {
     "dev": "nodemon server.js",
-    "start": "node server.js"
+    "start": "node server.js",
+    "migrate": "node src/scripts/migrate.js",
+    "migrate:down": "node src/scripts/migrateDown.js"
   },
   "dependencies": {
     "@socket.io/redis-adapter": "^8.3.0",
@@ -19,11 +21,24 @@
     "express": "^5.2.1",
     "jsonwebtoken": "^9.0.3",
     "mysql2": "^3.19.1",
+    "node-pg-migrate": "^8.0.4",
+    "pg": "^8.20.0",
+    "pg-hstore": "^2.3.4",
     "redis": "^5.11.0",
     "sequelize": "^6.37.8",
     "socket.io": "^4.8.3"
   },
   "devDependencies": {
-    "nodemon": "^3.1.14"
-  }
+    "nodemon": "^3.1.14",
+    "sequelize-cli": "^6.6.5"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/RoeunSaoly/backend.git"
+  },
+  "keywords": [],
+  "bugs": {
+    "url": "https://github.com/RoeunSaoly/backend/issues"
+  },
+  "homepage": "https://github.com/RoeunSaoly/backend#readme"
 }

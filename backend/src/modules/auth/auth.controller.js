@@ -1,10 +1,23 @@
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-import { createUser, findUserByEmail } from "./auth.model.js";
+import * as authService from "./auth.service.js";
+import { createUser, findUserByEmail, findUserByUsername } from "./auth.model.js";
 
 export const register = async (req, res) => {
     try {
         const { username, email, password } = req.body;
+
+        // Check if username already exists
+        const existingUsername = await findUserByUsername(username);
+        if (existingUsername) {
+            return res.status(400).json({ error: "Username already taken" });
+        }
+
+        // Check if email already exists
+        const existingEmail = await findUserByEmail(email);
+        if (existingEmail) {
+            return res.status(400).json({ error: "Email already registered" });
+        }
 
         const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -21,33 +34,16 @@ export const register = async (req, res) => {
 
 export const login = async (req, res) => {
     try {
-
         const { email, password } = req.body;
-
-        const user = await findUserByEmail(email);
-
-        if (!user) {
-            return res.status(400).json({ message: "User not found" });
-        }
-
-        const match = await bcrypt.compare(password, user.password);
-
-        if (!match) {
-            return res.status(400).json({ message: "Invalid password" });
-        }
-
-        const token = jwt.sign(
-            { id: user.id, email: user.email },
-            process.env.JWT_SECRET,
-            { expiresIn: "1d" }
-        );
-
+        const result = await authService.login(email, password);
+        
         res.json({
             message: "Login successful",
-            token
+            user: result.user,
+            token: result.token
         });
 
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        res.status(401).json({ error: error.message });
     }
 };

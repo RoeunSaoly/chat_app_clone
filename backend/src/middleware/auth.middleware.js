@@ -32,3 +32,6 @@ export const verifyToken = (req, res, next) => {
 
     }
 };
+
+// Default export for convenience
+export default verifyToken;

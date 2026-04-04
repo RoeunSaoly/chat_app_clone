@@ -1,9 +1,9 @@
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
-import * as userModel from "../models/userModel.js";
+import * as userModel from "./auth.model.js";
 
 export const login = async (email, password) => {
-    const user = await userModel.findByEmail(email);
+    const user = await userModel.findUserByEmail(email);
     if (!user) {
         throw new Error("User not found");
     }
@@ -13,12 +13,11 @@ export const login = async (email, password) => {
     const token = jwt.sign(
         { id: user.id, email: user.email },
         process.env.JWT_SECRET,
-        { expiresIn: process.env.JWT_EXPIRE }
+        { expiresIn: process.env.JWT_EXPIRE || "1d" }
     );
 
-    return { user, token };
+    // Remove password from user object before returning
+    const { password: _, ...userWithoutPassword } = user;
+    return { user: userWithoutPassword, token };
 
 }
-
-
-
