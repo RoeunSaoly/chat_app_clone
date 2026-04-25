@@ -4,8 +4,16 @@ export const getUserById = (id) => {
   return userModel.findUserById(id);
 };
 
+export const getAllUsers = (excludeUserId) => {
+  return userModel.getAllUsers(excludeUserId);
+};
+
 export const updateUser = (id, data) => {
   return userModel.updateUser(id, data);
+};
+
+export const updateOnlineStatus = (id, isOnline) => {
+  return userModel.updateOnlineStatus(id, isOnline);
 };
 
 export const deleteUser = (id) => {

@@ -6,6 +6,7 @@ enum class MessageStatus { SENT, DELIVERED, READ }
 data class Message(
     val id: String,
     val senderId: String,
+    val conversationId: String = "",
     val content: String,
     val timestamp: String,
     val status: MessageStatus = MessageStatus.DELIVERED,

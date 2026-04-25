@@ -85,6 +85,7 @@ fun NavGraph(
             ChatScreen(
                 conversationId = conversationId,
                 userId = userId,
+                currentUserId = "me", // TODO: Get from authenticated user session
                 onBack = { navController.popBackStack() },
                 onProfileClick = { navController.navigate(Screen.Profile.createRoute(userId)) }
             )

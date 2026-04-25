@@ -16,10 +16,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.chat_app_clone.MainActivity
 import com.example.chat_app_clone.network.AuthService
+import com.example.chat_app_clone.network.RetrofitClient
+import com.example.chat_app_clone.network.SocketManager
 import com.example.chat_app_clone.ui.theme.MessengerBlue
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -30,6 +34,7 @@ fun LoginScreen(
     onLoginSuccess: () -> Unit = {},
     onNavigateToRegister: () -> Unit = {}
 ) {
+    val context = LocalContext.current
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
@@ -128,6 +133,13 @@ fun LoginScreen(
                     result.fold(
                         onSuccess = { response ->
                             isLoading = false
+                            response.token?.let { token ->
+                                // Save token and initialize networking
+                                MainActivity.saveToken(context, token)
+                                RetrofitClient.setAuthToken(token)
+                                RetrofitClient.rebuild()
+                                SocketManager.getInstance().connectSocket(token)
+                            }
                             onLoginSuccess()
                         },
                         onFailure = { exception ->
