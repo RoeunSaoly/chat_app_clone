@@ -18,10 +18,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.chat_app_clone.data.SampleData
 import com.example.chat_app_clone.data.model.Conversation
 import com.example.chat_app_clone.ui.components.*
 import com.example.chat_app_clone.ui.theme.MessengerBlue
+import com.example.chat_app_clone.viewmodel.HomeViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -31,7 +33,19 @@ fun HomeScreen(
     onCallsTabClick: () -> Unit = {},
     onLogoutClick: () -> Unit = {}
 ) {
+    val viewModel: HomeViewModel = viewModel()
+    val conversations = viewModel.conversations
+    val isLoading = viewModel.isLoading.value
+    val error = viewModel.error.value
+
     var selectedTab by remember { mutableIntStateOf(0) }
+
+    // Refresh on first composition
+    LaunchedEffect(Unit) {
+        if (conversations.isEmpty()) {
+            viewModel.loadConversations()
+        }
+    }
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
@@ -46,6 +60,23 @@ fun HomeScreen(
                     )
                 },
                 actions = {
+                    // Refresh button
+                    Box(
+                        modifier = Modifier
+                            .size(36.dp)
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.surfaceVariant)
+                            .clickable { viewModel.loadConversations() },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            Icons.Default.Refresh,
+                            contentDescription = "Refresh",
+                            modifier = Modifier.size(20.dp),
+                            tint = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(8.dp))
                     // Camera icon
                     Box(
                         modifier = Modifier
@@ -119,86 +150,128 @@ fun HomeScreen(
             )
         }
     ) { paddingValues ->
-        LazyColumn(
+        Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            // Search bar
-            item {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 8.dp)
-                        .clip(androidx.compose.foundation.shape.RoundedCornerShape(24.dp))
-                        .background(MaterialTheme.colorScheme.surfaceVariant)
-                        .clickable(onClick = onSearchClick)
-                        .padding(horizontal = 16.dp, vertical = 10.dp)
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            Icons.Default.Search,
-                            contentDescription = "Search",
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.size(20.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            "Search",
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            fontSize = 15.sp
-                        )
-                    }
-                }
-            }
-
-            // Stories row
-            item {
-                LazyRow(
-                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
-                    horizontalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    // Own story first
-                    item {
-                        StoryCircle(user = SampleData.currentUser, isOwn = true)
-                    }
-                    items(SampleData.storyUsers) { user ->
-                        StoryCircle(user = user)
-                    }
-                }
-            }
-
-            // Pinned / Chats header
-            item {
-                Row(
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        "Chats",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 18.sp,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        modifier = Modifier.weight(1f)
-                    )
-                    Text(
-                        "Requests",
-                        fontSize = 14.sp,
-                        color = MessengerBlue,
-                        fontWeight = FontWeight.Medium
-                    )
-                }
-            }
-
-            // Conversation list
-            items(SampleData.conversations) { conversation ->
-                ConversationItem(
-                    conversation = conversation,
-                    onClick = { onConversationClick(conversation) }
+            if (isLoading && conversations.isEmpty()) {
+                CircularProgressIndicator(
+                    modifier = Modifier.align(Alignment.Center),
+                    color = MaterialTheme.colorScheme.primary
                 )
             }
 
-            item { Spacer(modifier = Modifier.height(8.dp)) }
+            LazyColumn(
+                modifier = Modifier.fillMaxSize()
+            ) {
+                // Search bar
+                item {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 8.dp)
+                            .clip(androidx.compose.foundation.shape.RoundedCornerShape(24.dp))
+                            .background(MaterialTheme.colorScheme.surfaceVariant)
+                            .clickable(onClick = onSearchClick)
+                            .padding(horizontal = 16.dp, vertical = 10.dp)
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                Icons.Default.Search,
+                                contentDescription = "Search",
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                "Search",
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                fontSize = 15.sp
+                            )
+                        }
+                    }
+                }
+
+                // Stories row
+                item {
+                    LazyRow(
+                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        // Own story first
+                        item {
+                            StoryCircle(user = SampleData.currentUser, isOwn = true)
+                        }
+                        items(SampleData.storyUsers) { user ->
+                            StoryCircle(user = user)
+                        }
+                    }
+                }
+
+                // Pinned / Chats header
+                item {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            "Chats",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 18.sp,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            modifier = Modifier.weight(1f)
+                        )
+                        Text(
+                            "Requests",
+                            fontSize = 14.sp,
+                            color = MessengerBlue,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                }
+
+                // Conversation list
+                if (conversations.isEmpty() && !isLoading) {
+                    item {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(32.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                "No conversations yet",
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                fontSize = 16.sp
+                            )
+                        }
+                    }
+                } else {
+                    items(conversations) { conversation ->
+                        ConversationItem(
+                            conversation = conversation,
+                            onClick = { onConversationClick(conversation) }
+                        )
+                    }
+                }
+
+                item { Spacer(modifier = Modifier.height(8.dp)) }
+            }
+
+            // Error snackbar
+            error?.let {
+                Snackbar(
+                    modifier = Modifier.align(Alignment.BottomCenter).padding(16.dp),
+                    action = {
+                        TextButton(onClick = { viewModel.clearError() }) {
+                            Text("Dismiss")
+                        }
+                    }
+                ) {
+                    Text(it)
+                }
+            }
         }
     }
 }

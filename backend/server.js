@@ -2,28 +2,28 @@ import app from "./src/app.js";
 import dotenv from "dotenv";
 import { connectDB } from "./src/config/db.js";
 import http from "http";
-import { Server } from "socket.io";
+import { initSocket } from "./src/config/socket.js";
 import chatSocket from "./src/plugin/chat.Socket.js";
+import { setIO } from "./src/utils/socketEmitter.js";
 
 dotenv.config();
 
 // create http server
 const server = http.createServer(app);
 
-// socket.io
-const io = new Server(server, {
-  cors: {
-    origin: "*",
-  },
-});
+// socket.io with Redis adapter for scaling
+const io = initSocket(server);
 
-// register socket
+// register socket emitter utility for cross-instance scaling
+setIO(io);
+
+// register socket plugins
 chatSocket(io);
 
 // connect database
 connectDB();
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 5000;
 
 // start server
 server.listen(PORT, () => {

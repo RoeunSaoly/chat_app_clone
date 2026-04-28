@@ -1,7 +1,6 @@
 package com.example.chat_app_clone.ui.screens
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -9,9 +8,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -22,27 +19,41 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.chat_app_clone.data.SampleData
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.chat_app_clone.ui.components.MessageBubble
-import com.example.chat_app_clone.ui.components.UserAvatar
+import com.example.chat_app_clone.viewmodel.ChatViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChatScreen(
     conversationId: String,
     userId: String,
+    currentUserId: String,
     onBack: () -> Unit = {},
     onProfileClick: () -> Unit = {}
 ) {
-    //val conversation = SampleData.conversations.find { it.id == conversationId }
-    val user = SampleData.users.find { it.id == userId } ?: SampleData.users.first()
-    val messages = remember { SampleData.getMessagesForConversation(conversationId) }
+    val viewModel: ChatViewModel = viewModel(
+        factory = ChatViewModelFactory(currentUserId)
+    )
+
+    val messages = viewModel.messages
+    val isLoading = viewModel.isLoading.value
+    val error = viewModel.error.value
+    val typingUsers = viewModel.typingUsers.value
+
     var inputText by remember { mutableStateOf("") }
     val listState = rememberLazyListState()
 
+    // Set conversation when screen opens
+    LaunchedEffect(conversationId) {
+        viewModel.setConversationId(conversationId)
+    }
+
+    // Scroll to bottom when messages change
     LaunchedEffect(messages.size) {
         if (messages.isNotEmpty()) {
             listState.animateScrollToItem(messages.size - 1)
@@ -52,8 +63,8 @@ fun ChatScreen(
     // Beautiful Pastel Gradient Background
     val backgroundBrush = Brush.verticalGradient(
         colors = listOf(
-            Color(0xFFFDE8ED), // Top lighter pink
-            Color(0xFFE2C4D3)  // Bottom deeper pastel
+            Color(0xFFFDE8ED),
+            Color(0xFFE2C4D3)
         )
     )
 
@@ -63,13 +74,22 @@ fun ChatScreen(
             topBar = {
                 TopAppBar(
                     title = {
-                        Text(
-                            text = user.name + " \uD83C\uDF38", // Add emoji for that cute feel
-                            fontWeight = FontWeight.Medium,
-                            fontSize = 18.sp,
-                            color = Color.Black,
-                            modifier = Modifier.fillMaxWidth().wrapContentWidth(Alignment.CenterHorizontally)
-                        )
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text(
+                                text = "Chat",
+                                fontWeight = FontWeight.Medium,
+                                fontSize = 18.sp,
+                                color = Color.Black
+                            )
+                            if (typingUsers.isNotEmpty()) {
+                                Text(
+                                    text = typingUsers.joinToString(", ") + " is typing...",
+                                    fontSize = 12.sp,
+                                    color = Color(0xFF4CAF50),
+                                    textAlign = TextAlign.Center
+                                )
+                            }
+                        }
                     },
                     navigationIcon = {
                         IconButton(onClick = onBack) {
@@ -97,32 +117,90 @@ fun ChatScreen(
             bottomBar = {
                 ChatInputBar(
                     text = inputText,
-                    onTextChange = { inputText = it },
-                    onSend = { inputText = "" }
+                    onTextChange = {
+                        inputText = it
+                        viewModel.onTyping()
+                    },
+                    onSend = {
+                        if (inputText.isNotEmpty()) {
+                            viewModel.sendMessage(inputText)
+                            inputText = ""
+                            viewModel.onStopTyping()
+                        }
+                    }
                 )
             }
         ) { paddingValues ->
-            LazyColumn(
-                state = listState,
+            Box(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(paddingValues)
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                items(messages) { message ->
-                    val isOwn = message.senderId == "me"
-                    val showAvatar = !isOwn
-                    MessageBubble(
-                        message = message,
-                        isOwn = isOwn,
-                        showAvatar = showAvatar,
-                        senderName = user.name
+                if (isLoading && messages.isEmpty()) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.align(Alignment.Center),
+                        color = MaterialTheme.colorScheme.primary
                     )
                 }
-                item { Spacer(modifier = Modifier.height(16.dp)) }
+
+                LazyColumn(
+                    state = listState,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    items(messages) { message ->
+                        val isOwn = message.senderId == currentUserId
+                        MessageBubble(
+                            message = message,
+                            isOwn = isOwn,
+                            showAvatar = !isOwn,
+                            senderName = if (isOwn) "You" else "User"
+                        )
+                    }
+
+                    if (typingUsers.isNotEmpty()) {
+                        item {
+                            TypingIndicator(typingUsers = typingUsers)
+                        }
+                    }
+
+                    item { Spacer(modifier = Modifier.height(16.dp)) }
+                }
+
+                // Error snackbar
+                error?.let {
+                    Snackbar(
+                        modifier = Modifier.align(Alignment.BottomCenter).padding(16.dp),
+                        action = {
+                            TextButton(onClick = { viewModel.clearError() }) {
+                                Text("Dismiss")
+                            }
+                        }
+                    ) {
+                        Text(it)
+                    }
+                }
             }
         }
+    }
+}
+
+@Composable
+private fun TypingIndicator(typingUsers: List<String>) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(start = 8.dp, top = 4.dp, bottom = 4.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = typingUsers.joinToString(", ") + " is typing...",
+            fontSize = 13.sp,
+            color = Color.Gray,
+            fontStyle = androidx.compose.ui.text.font.FontStyle.Italic
+        )
     }
 }
 
@@ -132,7 +210,6 @@ private fun ChatInputBar(
     onTextChange: (String) -> Unit,
     onSend: () -> Unit
 ) {
-    // Floating Pill Input Bar
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -144,7 +221,6 @@ private fun ChatInputBar(
             .padding(horizontal = 8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // Attachment Plus Button
         IconButton(onClick = {}) {
             Box(
                 modifier = Modifier
@@ -154,9 +230,9 @@ private fun ChatInputBar(
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
-                    Icons.Default.Add, 
+                    Icons.Default.Add,
                     contentDescription = "Attach",
-                    tint = Color.Black, 
+                    tint = Color.Black,
                     modifier = Modifier.size(20.dp)
                 )
             }
@@ -164,13 +240,12 @@ private fun ChatInputBar(
 
         Spacer(modifier = Modifier.width(8.dp))
 
-        // Text input
         Box(
             modifier = Modifier.weight(1f),
             contentAlignment = Alignment.CenterStart
         ) {
             if (text.isEmpty()) {
-                Text("Type a message here...", color = Color.Gray.copy(alpha=0.7f), fontSize = 15.sp)
+                Text("Type a message here...", color = Color.Gray.copy(alpha = 0.7f), fontSize = 15.sp)
             }
             BasicTextField(
                 value = text,
@@ -186,12 +261,11 @@ private fun ChatInputBar(
 
         Spacer(modifier = Modifier.width(8.dp))
 
-        // Right Button (Mic or Send)
         IconButton(
             onClick = { if (text.isNotEmpty()) onSend() }
         ) {
             Icon(
-                imageVector = if (text.isNotEmpty()) Icons.Default.Send else Icons.Default.Mic,
+                imageVector = if (text.isNotEmpty()) Icons.AutoMirrored.Filled.Send else Icons.Default.Mic,
                 contentDescription = if (text.isNotEmpty()) "Send" else "Voice",
                 tint = Color.Black,
                 modifier = Modifier.size(24.dp)
@@ -200,8 +274,19 @@ private fun ChatInputBar(
     }
 }
 
+class ChatViewModelFactory(private val currentUserId: String) :
+    androidx.lifecycle.ViewModelProvider.Factory {
+    @Suppress("UNCHECKED_CAST")
+    override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
+        if (modelClass.isAssignableFrom(ChatViewModel::class.java)) {
+            return ChatViewModel(currentUserId = currentUserId) as T
+        }
+        throw IllegalArgumentException("Unknown ViewModel class")
+    }
+}
+
 @Preview(showBackground = true)
 @Composable
 fun ChatScreenPreview() {
-    ChatScreen(conversationId = "c1", userId = "1")
+    ChatScreen(conversationId = "1", userId = "2", currentUserId = "me")
 }

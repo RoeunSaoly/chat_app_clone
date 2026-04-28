@@ -10,6 +10,19 @@ export const getProfile = async (req, res) => {
   }
 };
 
+// GET ALL USERS
+export const getUsers = async (req, res) => {
+  try {
+    const users = await userService.getAllUsers(req.user.id);
+    res.json({
+      success: true,
+      data: users,
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+};
+
 // UPDATE PROFILE
 export const updateProfile = async (req, res) => {
   try {

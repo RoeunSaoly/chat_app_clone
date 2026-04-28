@@ -1,5 +1,6 @@
 package com.example.chat_app_clone
 
+import android.content.Context
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
@@ -11,45 +12,34 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
+import com.example.chat_app_clone.network.RetrofitClient
+import com.example.chat_app_clone.network.SocketManager
 import com.example.chat_app_clone.ui.theme.Chat_app_cloneTheme
-import io.socket.client.Socket
 
 import com.example.chat_app_clone.navigation.NavGraph
-import com.example.chat_app_clone.navigation.Screen
 
 class MainActivity : ComponentActivity() {
-    // Initialize the SocketManager
-    private val socketManager = SocketManager()
+
+    private val socketManager = SocketManager.getInstance()
+    private val prefs by lazy { getSharedPreferences("chat_app", Context.MODE_PRIVATE) }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // 1. Initialize Socket Connection (Use a placeholder for now)
-        socketManager.connectSocket("your_actual_jwt_token_here")
-
-        // 2. Set up Socket Listeners
-        val socket = socketManager.getSocket()
-        socket?.on(Socket.EVENT_CONNECT) {
-            Log.d("SocketIO", "Successfully connected to the server!")
+        // Restore token and initialize socket
+        val token = prefs.getString("auth_token", null)
+        if (!token.isNullOrEmpty()) {
+            RetrofitClient.setAuthToken(token)
+            RetrofitClient.rebuild()
+            socketManager.connectSocket(token)
+            Log.d("SocketIO", "Restored socket connection with token")
         }
 
-        socket?.on("newMessage") { args ->
-            if (args.isNotEmpty()) {
-                val data = args[0].toString()
-                Log.d("SocketIO", "New Message received: $data")
-            }
-        }
-
-        // 3. Enable Full Screen (Edge-to-Edge)
         enableEdgeToEdge()
 
-        // 4. Set the UI Content
         setContent {
             Chat_app_cloneTheme {
-                // We use a Scaffold to handle system bar padding properly
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    // Pass the padding to your NavGraph or main container
                     NavGraph(modifier = Modifier.padding(innerPadding))
                 }
             }
@@ -58,18 +48,30 @@ class MainActivity : ComponentActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
-        // Good practice: Disconnect socket when activity is destroyed
-        socketManager.getSocket()?.disconnect()
+        socketManager.disconnect()
+    }
+
+    companion object {
+        fun saveToken(context: Context, token: String) {
+            context.getSharedPreferences("chat_app", Context.MODE_PRIVATE)
+                .edit()
+                .putString("auth_token", token)
+                .apply()
+        }
+
+        fun clearToken(context: Context) {
+            context.getSharedPreferences("chat_app", Context.MODE_PRIVATE)
+                .edit()
+                .remove("auth_token")
+                .apply()
+        }
     }
 }
 
-/**
- * A Preview function to see your UI in the Android Studio Design tab.
- */
 @Preview(showBackground = true)
 @Composable
 fun MainActivityPreview() {
     Chat_app_cloneTheme {
-        NavGraph() // ✅ modifier has a default value
+        NavGraph()
     }
 }
