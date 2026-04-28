@@ -136,8 +136,8 @@ fun LoginScreen(
                             response.token?.let { token ->
                                 // Save token and initialize networking
                                 MainActivity.saveToken(context, token)
+                                response.user?.id?.let { MainActivity.saveCurrentUserId(context, it.toString()) }
                                 RetrofitClient.setAuthToken(token)
-                                RetrofitClient.rebuild()
                                 SocketManager.getInstance().connectSocket(token)
                             }
                             onLoginSuccess()

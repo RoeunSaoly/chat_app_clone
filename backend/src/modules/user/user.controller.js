@@ -13,7 +13,7 @@ export const getProfile = async (req, res) => {
 // GET ALL USERS
 export const getUsers = async (req, res) => {
   try {
-    const users = await userService.getAllUsers(req.user.id);
+    const users = await userService.getAllUsers(req.user.id, req.query.search);
     res.json({
       success: true,
       data: users,

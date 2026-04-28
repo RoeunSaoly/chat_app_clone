@@ -11,13 +11,15 @@ export const findUserById = async (id) => {
 };
 
 // GET ALL USERS
-export const getAllUsers = async (excludeUserId) => {
+export const getAllUsers = async (excludeUserId, search = "") => {
+  const keyword = `%${search.trim()}%`;
   const result = await pool.query(
     `SELECT id, username, email, avatar, status_message, is_online, last_seen
      FROM users
      WHERE id != $1
+       AND ($2 = '%%' OR username ILIKE $2 OR email ILIKE $2)
      ORDER BY username ASC`,
-    [excludeUserId]
+    [excludeUserId, keyword]
   );
   return result.rows;
 };
@@ -28,11 +30,11 @@ export const updateUser = async (id, data) => {
 
   const result = await pool.query(
     `UPDATE users
-     SET username = $1,
-         avatar = $2,
-         status_message = $3
+     SET username = COALESCE($1, username),
+         avatar = COALESCE($2, avatar),
+         status_message = COALESCE($3, status_message)
      WHERE id = $4
-     RETURNING id, username, email, avatar, status_message`,
+     RETURNING id, username, email, avatar, status_message, is_online, last_seen`,
     [username, avatar, status_message, id]
   );
 

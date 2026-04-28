@@ -13,27 +13,39 @@ import retrofit2.http.Path
 import retrofit2.http.Query
 
 interface ChatApi {
-    @GET("api/chat/conversations")
+    @GET("api/conversations")
     suspend fun getConversations(): Response<ConversationsApiResponse>
 
-    @GET("api/chat/conversations/{id}")
-    suspend fun getConversation(@Path("id") id: String): Response<ConversationApiResponse>
+    @GET("api/conversations/{id}")
+    suspend fun getConversation(@Path("id") id: Long): Response<ConversationApiResponse>
 
-    @POST("api/chat/conversations")
+    @POST("api/conversations")
     suspend fun createConversation(@Body request: CreateConversationRequest): Response<ConversationApiResponse>
 
-    @GET("api/chat/messages/{conversationId}")
+    @POST("api/conversations/private")
+    suspend fun createPrivateConversation(@Body request: CreatePrivateConversationRequest): Response<ConversationApiResponse>
+
+    @POST("api/conversations/group")
+    suspend fun createGroupConversation(@Body request: CreateGroupConversationRequest): Response<ConversationApiResponse>
+
+    @GET("api/messages/{conversationId}")
     suspend fun getMessages(
         @Path("conversationId") conversationId: String,
         @Query("limit") limit: Int = 50,
         @Query("offset") offset: Int = 0
     ): Response<MessagesApiResponse>
 
-    @POST("api/chat/message")
+    @POST("api/messages")
     suspend fun sendMessage(@Body request: SendMessageRequest): Response<SendMessageResponse>
 
-    @PATCH("api/chat/messages/seen")
+    @POST("api/messages/seen")
     suspend fun markMessagesSeen(@Body request: MarkSeenRequest): Response<MarkSeenResponse>
+
+    @POST("api/typing")
+    suspend fun updateTyping(@Body request: TypingRequest): Response<TypingApiResponse>
+
+    @POST("api/messages/react")
+    suspend fun reactToMessage(@Body request: ReactMessageRequest): Response<GenericApiResponse>
 }
 
 data class ConversationsApiResponse(
@@ -68,7 +80,7 @@ data class MarkSeenResponse(
 )
 
 data class MarkSeenData(
-    @SerializedName("conversation_id") val conversationId: String,
+    @SerializedName("conversation_id") val conversationId: Long,
     @SerializedName("marked_as_seen") val markedAsSeen: List<Long>
 )
 
@@ -80,7 +92,37 @@ data class CreateConversationRequest(
 )
 
 data class MarkSeenRequest(
-    @SerializedName("conversationId") val conversationId: String
+    @SerializedName("conversationId") val conversationId: Long
+)
+
+data class CreatePrivateConversationRequest(
+    @SerializedName("userId") val userId: Long
+)
+
+data class CreateGroupConversationRequest(
+    @SerializedName("name") val name: String,
+    @SerializedName("member_ids") val memberIds: List<Long>,
+    @SerializedName("avatar") val avatar: String? = null
+)
+
+data class TypingRequest(
+    @SerializedName("conversationId") val conversationId: Long,
+    @SerializedName("isTyping") val isTyping: Boolean
+)
+
+data class ReactMessageRequest(
+    @SerializedName("messageId") val messageId: Long,
+    @SerializedName("reaction") val reaction: String? = null
+)
+
+data class TypingApiResponse(
+    @SerializedName("success") val success: Boolean,
+    @SerializedName("error") val error: String? = null
+)
+
+data class GenericApiResponse(
+    @SerializedName("success") val success: Boolean,
+    @SerializedName("error") val error: String? = null
 )
 
 data class Pagination(

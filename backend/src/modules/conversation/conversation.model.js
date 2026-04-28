@@ -74,6 +74,39 @@ export const getConversationById = async (conversationId) => {
   return result.rows[0];
 };
 
+export const getConversationIdsByUser = async (userId) => {
+  const result = await pool.query(
+    `SELECT conversation_id
+     FROM conversation_members
+     WHERE user_id = $1`,
+    [userId]
+  );
+
+  return result.rows.map((row) => row.conversation_id);
+};
+
+/**
+ * Find an existing private conversation for exactly two users.
+ */
+export const findPrivateConversation = async (userA, userB) => {
+  const result = await pool.query(
+    `SELECT c.id, c.type, c.name, c.avatar, c.created_by, c.created_at
+     FROM conversations c
+     JOIN conversation_members cm1 ON cm1.conversation_id = c.id AND cm1.user_id = $1
+     JOIN conversation_members cm2 ON cm2.conversation_id = c.id AND cm2.user_id = $2
+     WHERE c.type = 'private'
+       AND (
+         SELECT COUNT(*)::int
+         FROM conversation_members cm
+         WHERE cm.conversation_id = c.id
+       ) = 2
+     LIMIT 1`,
+    [userA, userB]
+  );
+
+  return result.rows[0];
+};
+
 /**
  * Create a new conversation
  */

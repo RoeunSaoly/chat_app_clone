@@ -1,6 +1,7 @@
 import express from "express";
 import cors from "cors";
 import routes from "./routes/index.routes.js";
+import { errorHandler, notFoundHandler } from "./middleware/error.middleware.js";
 
 const app = express();
 
@@ -18,5 +19,8 @@ app.get("/", (req, res) => {
 
 // api route
 app.use("/api", routes)
+
+app.use(notFoundHandler);
+app.use(errorHandler);
 
 export default app;

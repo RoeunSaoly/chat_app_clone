@@ -59,10 +59,23 @@ class MainActivity : ComponentActivity() {
                 .apply()
         }
 
+        fun saveCurrentUserId(context: Context, userId: String) {
+            context.getSharedPreferences("chat_app", Context.MODE_PRIVATE)
+                .edit()
+                .putString("current_user_id", userId)
+                .apply()
+        }
+
+        fun getCurrentUserId(context: Context): String {
+            return context.getSharedPreferences("chat_app", Context.MODE_PRIVATE)
+                .getString("current_user_id", "") ?: ""
+        }
+
         fun clearToken(context: Context) {
             context.getSharedPreferences("chat_app", Context.MODE_PRIVATE)
                 .edit()
                 .remove("auth_token")
+                .remove("current_user_id")
                 .apply()
         }
     }

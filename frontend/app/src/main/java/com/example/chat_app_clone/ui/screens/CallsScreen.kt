@@ -95,12 +95,12 @@ private fun CallRecordItem(call: SampleData.CallRecord) {
             .padding(horizontal = 16.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        UserAvatar(name = call.user.name, size = 52)
+        UserAvatar(name = call.user.displayName, size = 52)
         Spacer(modifier = Modifier.width(12.dp))
 
         Column(modifier = Modifier.weight(1f)) {
             Text(
-                text = call.user.name,
+                text = call.user.displayName,
                 fontWeight = FontWeight.SemiBold,
                 fontSize = 16.sp,
                 color = MaterialTheme.colorScheme.onSurface

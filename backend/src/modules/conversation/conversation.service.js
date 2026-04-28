@@ -27,10 +27,17 @@ export const getUserConversations = async (userId) => {
   return conversationsWithMembers;
 };
 
+export const getUserConversationIds = async (userId) => {
+  return conversationModel.getConversationIdsByUser(userId);
+};
+
 /**
  * Get conversation detail with members
  */
 export const getConversationDetail = async (conversationId, userId) => {
+  const canAccess = await conversationModel.isConversationMember(conversationId, userId);
+  if (!canAccess) return null;
+
   const conversation = await conversationModel.getConversationById(conversationId);
   if (!conversation) return null;
 
@@ -51,6 +58,18 @@ export const createConversation = async (data) => {
   // Ensure creator is in member list
   const allMembers = [...new Set([...member_ids, created_by])];
 
+  if (type === "private" && allMembers.length === 2) {
+    const existing = await conversationModel.findPrivateConversation(allMembers[0], allMembers[1]);
+    if (existing) {
+      const members = await conversationModel.getConversationMembers(existing.id);
+      return {
+        ...existing,
+        members,
+        existing: true,
+      };
+    }
+  }
+
   const conversation = await conversationModel.createConversation({
     type,
     name,
@@ -66,6 +85,24 @@ export const createConversation = async (data) => {
     ...conversation,
     members,
   };
+};
+
+export const createPrivateConversation = async (createdBy, otherUserId) => {
+  return createConversation({
+    type: "private",
+    created_by: createdBy,
+    member_ids: [Number(otherUserId)],
+  });
+};
+
+export const createGroupConversation = async (createdBy, name, memberIds, avatar = null) => {
+  return createConversation({
+    type: "group",
+    name,
+    avatar,
+    created_by: createdBy,
+    member_ids: memberIds.map(Number),
+  });
 };
 
 /**

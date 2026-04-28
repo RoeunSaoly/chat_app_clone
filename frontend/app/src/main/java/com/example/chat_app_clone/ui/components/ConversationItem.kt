@@ -22,9 +22,10 @@ import com.example.chat_app_clone.ui.theme.OnlineGreen
 @Composable
 fun ConversationItem(
     conversation: Conversation,
+    currentUserId: Long,
     onClick: () -> Unit
 ) {
-    val user = conversation.otherUser
+    val title = conversation.displayName(currentUserId)
     val hasUnread = conversation.unreadCount > 0
 
     Row(
@@ -36,9 +37,9 @@ fun ConversationItem(
     ) {
         // Avatar with online indicator
         Box(modifier = Modifier.size(56.dp)) {
-            UserAvatar(name = user.name, size = 56)
+            UserAvatar(name = title, size = 56)
 
-            if (user.isOnline) {
+            if (conversation.isOtherUserOnline(currentUserId)) {
                 Box(
                     modifier = Modifier
                         .size(16.dp)
@@ -62,7 +63,7 @@ fun ConversationItem(
         // Name and message preview
         Column(modifier = Modifier.weight(1f)) {
             Text(
-                text = user.name,
+                text = title,
                 fontWeight = if (hasUnread) FontWeight.Bold else FontWeight.SemiBold,
                 fontSize = 16.sp,
                 color = MaterialTheme.colorScheme.onSurface,
@@ -71,7 +72,7 @@ fun ConversationItem(
             )
             Spacer(modifier = Modifier.height(2.dp))
             Text(
-                text = conversation.lastMessage,
+                text = conversation.lastMessage ?: "No messages yet",
                 fontSize = 14.sp,
                 fontWeight = if (hasUnread) FontWeight.SemiBold else FontWeight.Normal,
                 color = if (hasUnread) MaterialTheme.colorScheme.onSurface
@@ -86,7 +87,7 @@ fun ConversationItem(
         // Time and unread badge
         Column(horizontalAlignment = Alignment.End) {
             Text(
-                text = conversation.lastMessageTime,
+                text = conversation.updatedAt?.let { formatChatTime(it) }.orEmpty(),
                 fontSize = 12.sp,
                 color = if (hasUnread) MessengerBlue else MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -111,4 +112,8 @@ fun ConversationItem(
             }
         }
     }
+}
+
+private fun formatChatTime(value: String): String {
+    return value.substringAfter("T", value).take(5).ifBlank { value }
 }

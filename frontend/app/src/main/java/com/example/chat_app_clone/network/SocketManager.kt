@@ -39,7 +39,7 @@ class SocketManager private constructor() {
                 reconnectionDelay = 1000
                 reconnectionDelayMax = 5000
             }
-            mSocket = IO.socket("http://10.0.2.2:5000", options)
+            mSocket = IO.socket(NetworkConfig.SOCKET_URL, options)
             mSocket?.connect()
         } catch (e: URISyntaxException) {
             e.printStackTrace()
@@ -122,13 +122,15 @@ class SocketManager private constructor() {
     }
 
     fun onNewMessage(callback: (MessageResponse) -> Unit) {
-        mSocket?.on("new_message") { args ->
+        val listener: (Array<Any>) -> Unit = { args ->
             if (args.isNotEmpty()) {
                 val json = gson.toJson(args[0])
                 val message = gson.fromJson(json, MessageResponse::class.java)
                 callback(message)
             }
         }
+        mSocket?.on("receive_message", listener)
+        mSocket?.on("new_message", listener)
     }
 
     fun onMessageDelivered(callback: (JSONObject) -> Unit) {

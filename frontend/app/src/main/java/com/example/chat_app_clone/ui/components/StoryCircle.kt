@@ -59,7 +59,7 @@ fun StoryCircle(
                         .padding(2.dp)
                 ) {
                     UserAvatar(
-                        name = user.name,
+                        name = user.displayName,
                         size = 56,
                         modifier = Modifier.fillMaxSize()
                     )
@@ -89,7 +89,7 @@ fun StoryCircle(
         Spacer(modifier = Modifier.height(4.dp))
 
         Text(
-            text = if (isOwn) "Your Story" else user.name.split(" ").first(),
+            text = if (isOwn) "Your Story" else user.displayName.split(" ").first(),
             fontSize = 11.sp,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,

@@ -31,6 +31,8 @@ bin/
 gen/
 out/
 .gradle/
+frontend/.gradle-home/
+frontend/.android-home/
 build/
 local.properties
 proguard/
