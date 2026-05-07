@@ -4,11 +4,15 @@ import {
   sendMessage,
   getMessages,
   markMessagesSeen,
+  reactToMessage,
+  updateTypingStatus,
 } from "../modules/message/message.controller.js";
 import {
   getConversations,
   getConversation,
   createConversation,
+  createGroupConversation,
+  createPrivateConversation,
 } from "../modules/conversation/conversation.controller.js";
 
 const router = express.Router();
@@ -30,6 +34,8 @@ router.get("/conversations/:id", authMiddleware, getConversation);
  * Create a new conversation
  */
 router.post("/conversations", authMiddleware, createConversation);
+router.post("/conversations/private", authMiddleware, createPrivateConversation);
+router.post("/conversations/group", authMiddleware, createGroupConversation);
 
 /**
  * POST /chat/message
@@ -38,6 +44,7 @@ router.post("/conversations", authMiddleware, createConversation);
  * Body: { conversationId, content, messageType }
  */
 router.post("/message", authMiddleware, sendMessage);
+router.post("/messages", authMiddleware, sendMessage);
 
 /**
  * GET /chat/messages/:conversationId
@@ -50,6 +57,9 @@ router.get("/messages/:conversationId", authMiddleware, getMessages);
  * Mark all messages in a conversation as seen
  */
 router.patch("/messages/seen", authMiddleware, markMessagesSeen);
+router.post("/messages/seen", authMiddleware, markMessagesSeen);
+router.post("/messages/react", authMiddleware, reactToMessage);
+router.post("/typing", authMiddleware, updateTypingStatus);
 
 export default router;
 

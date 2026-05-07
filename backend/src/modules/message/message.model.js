@@ -159,6 +159,23 @@ export const updateMessageStatus = async (messageId, status) => {
 };
 
 /**
+ * Update status for multiple messages.
+ */
+export const updateMessagesStatus = async (messageIds, status) => {
+  if (!messageIds || messageIds.length === 0) return [];
+
+  const result = await pool.query(
+    `UPDATE messages
+     SET status = $2
+     WHERE id = ANY($1::bigint[])
+     RETURNING id, status`,
+    [messageIds, status]
+  );
+
+  return result.rows;
+};
+
+/**
  * Get unread message count for a user in a conversation
  */
 export const getConversationUnreadCount = async (conversationId, userId) => {
@@ -206,6 +223,52 @@ export const getTypingUsers = async (conversationId, excludeUserId) => {
        AND ts.is_typing = TRUE
        AND ts.updated_at > NOW() - INTERVAL '5 seconds'`,
     [conversationId, excludeUserId]
+  );
+
+  return result.rows;
+};
+
+/**
+ * Add or update a user's reaction for a message.
+ */
+export const upsertReaction = async (messageId, userId, reaction) => {
+  const result = await pool.query(
+    `INSERT INTO message_reactions (message_id, user_id, reaction)
+     VALUES ($1, $2, $3)
+     ON CONFLICT (message_id, user_id)
+     DO UPDATE SET reaction = $3
+     RETURNING id, message_id, user_id, reaction`,
+    [messageId, userId, reaction]
+  );
+
+  return result.rows[0];
+};
+
+/**
+ * Remove a user's reaction from a message.
+ */
+export const deleteReaction = async (messageId, userId) => {
+  const result = await pool.query(
+    `DELETE FROM message_reactions
+     WHERE message_id = $1 AND user_id = $2
+     RETURNING id, message_id, user_id, reaction`,
+    [messageId, userId]
+  );
+
+  return result.rows[0] || null;
+};
+
+/**
+ * Get all reactions for a message.
+ */
+export const getMessageReactions = async (messageId) => {
+  const result = await pool.query(
+    `SELECT mr.user_id, mr.reaction, u.username
+     FROM message_reactions mr
+     JOIN users u ON u.id = mr.user_id
+     WHERE mr.message_id = $1
+     ORDER BY mr.id ASC`,
+    [messageId]
   );
 
   return result.rows;

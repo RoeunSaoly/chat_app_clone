@@ -19,6 +19,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.compose.runtime.collectAsState
 import com.example.chat_app_clone.data.SampleData
 import com.example.chat_app_clone.data.model.Conversation
 import com.example.chat_app_clone.ui.components.*
@@ -30,13 +31,18 @@ import com.example.chat_app_clone.viewmodel.HomeViewModel
 fun HomeScreen(
     onConversationClick: (Conversation) -> Unit = {},
     onSearchClick: () -> Unit = {},
+    onCreateGroupClick: () -> Unit = {},
     onCallsTabClick: () -> Unit = {},
     onLogoutClick: () -> Unit = {}
 ) {
     val viewModel: HomeViewModel = viewModel()
-    val conversations = viewModel.conversations
-    val isLoading = viewModel.isLoading.value
-    val error = viewModel.error.value
+    val uiState by viewModel.uiState.collectAsState()
+    val conversations = uiState.conversations
+    val isLoading = uiState.isLoading
+    val error = uiState.error
+    val currentUserId = com.example.chat_app_clone.MainActivity.getCurrentUserId(
+        androidx.compose.ui.platform.LocalContext.current
+    ).toLongOrNull() ?: 0L
 
     var selectedTab by remember { mutableIntStateOf(0) }
 
@@ -83,7 +89,7 @@ fun HomeScreen(
                             .size(36.dp)
                             .clip(CircleShape)
                             .background(MaterialTheme.colorScheme.surfaceVariant)
-                            .clickable { },
+                            .clickable { onCreateGroupClick() },
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
@@ -130,7 +136,7 @@ fun HomeScreen(
                     Spacer(modifier = Modifier.width(8.dp))
                     // Avatar
                     UserAvatar(
-                        name = SampleData.currentUser.name,
+                        name = SampleData.currentUser.displayName,
                         size = 36
                     )
                     Spacer(modifier = Modifier.width(12.dp))
@@ -251,6 +257,7 @@ fun HomeScreen(
                     items(conversations) { conversation ->
                         ConversationItem(
                             conversation = conversation,
+                            currentUserId = currentUserId,
                             onClick = { onConversationClick(conversation) }
                         )
                     }

@@ -1,7 +1,7 @@
 import jwt from "jsonwebtoken";
 import * as messageService from "../modules/message/message.service.js";
 import * as userService from "../modules/user/user.service.js";
-import { emitToConversation, emitToUser } from "../utils/socketEmitter.js";
+import * as conversationService from "../modules/conversation/conversation.service.js";
 
 // In-memory tracking of online users (can be replaced with Redis for scaling)
 const onlineUsers = new Map();
@@ -17,7 +17,7 @@ const chatSocket = (io) => {
     }
 
     try {
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      const decoded = jwt.verify(token, process.env.JWT_SECRET || "dev_secret_change_me");
       socket.user = decoded;
       next();
     } catch (err) {
@@ -36,6 +36,12 @@ const chatSocket = (io) => {
 
     // Join personal room for targeted notifications
     socket.join(`user:${userId}`);
+
+    // Automatically join every conversation room this user belongs to.
+    const conversationIds = await conversationService.getUserConversationIds(userId);
+    conversationIds.forEach((conversationId) => {
+      socket.join(`conversation:${conversationId}`);
+    });
 
     // Emit user_online event to all connected sockets
     socket.broadcast.emit("user_online", { user_id: userId });

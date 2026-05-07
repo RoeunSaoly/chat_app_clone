@@ -10,8 +10,10 @@ import { verifyToken } from "../../middleware/auth.middleware.js";
 
 const router = express.Router();
 
+router.get("/", verifyToken, getUsers);
+router.get("/profile", verifyToken, getProfile);
+router.put("/profile", verifyToken, updateProfile);
 router.get("/me", verifyToken, getProfile);
-router.get("/users", verifyToken, getUsers);
 router.put("/me", verifyToken, updateProfile);
 router.delete("/me", verifyToken, deleteUser);
 

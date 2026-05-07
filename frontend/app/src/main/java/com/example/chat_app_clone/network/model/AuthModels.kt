@@ -19,8 +19,12 @@ data class RegisterRequest(
 )
 
 data class AuthResponse(
+    @SerializedName("success")
+    val success: Boolean = false,
     @SerializedName("message")
-    val message: String,
+    val message: String? = null,
+    @SerializedName("user")
+    val user: UserResponse? = null,
     @SerializedName("token")
     val token: String? = null,
     @SerializedName("error")

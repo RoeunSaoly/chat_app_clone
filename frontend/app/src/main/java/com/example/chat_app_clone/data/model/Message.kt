@@ -1,15 +1,46 @@
 package com.example.chat_app_clone.data.model
 
-enum class MessageType { TEXT, IMAGE, EMOJI, AUDIO, VIDEO, STICKER }
-enum class MessageStatus { SENT, DELIVERED, READ }
+import com.google.gson.annotations.SerializedName
 
 data class Message(
-    val id: String,
-    val senderId: String,
-    val conversationId: String = "",
+    @SerializedName("id")
+    val id: Long,
+    @SerializedName("conversation_id")
+    val conversationId: Long,
+    @SerializedName("sender_id")
+    val senderId: Long,
+    @SerializedName("content")
     val content: String,
-    val timestamp: String,
-    val status: MessageStatus = MessageStatus.DELIVERED,
-    val type: MessageType = MessageType.TEXT,
-    val reactionEmoji: String? = null
+    @SerializedName("message_type")
+    val messageType: String = "text",
+    @SerializedName("status")
+    val status: String = "sent",
+    @SerializedName("created_at")
+    val createdAt: String,
+    @SerializedName("sender_username")
+    val senderUsername: String? = null,
+    @SerializedName("sender_avatar")
+    val senderAvatar: String? = null,
+    @SerializedName("read_by")
+    val readBy: List<MessageRead> = emptyList(),
+    @SerializedName("reactions")
+    val reactions: List<MessageReaction> = emptyList()
+)
+
+data class MessageRead(
+    @SerializedName("user_id")
+    val userId: Long,
+    @SerializedName("username")
+    val username: String? = null,
+    @SerializedName("seen_at")
+    val seenAt: String? = null
+)
+
+data class MessageReaction(
+    @SerializedName("user_id")
+    val userId: Long,
+    @SerializedName("username")
+    val username: String? = null,
+    @SerializedName("reaction")
+    val reaction: String? = null
 )

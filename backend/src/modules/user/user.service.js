@@ -4,8 +4,8 @@ export const getUserById = (id) => {
   return userModel.findUserById(id);
 };
 
-export const getAllUsers = (excludeUserId) => {
-  return userModel.getAllUsers(excludeUserId);
+export const getAllUsers = (excludeUserId, search) => {
+  return userModel.getAllUsers(excludeUserId, search);
 };
 
 export const updateUser = (id, data) => {

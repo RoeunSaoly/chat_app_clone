@@ -1,104 +1,66 @@
 package com.example.chat_app_clone.viewmodel
 
-import androidx.compose.runtime.State
-import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.chat_app_clone.data.model.Conversation
-import com.example.chat_app_clone.data.model.User
 import com.example.chat_app_clone.data.repository.ChatRepository
-import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+
+data class HomeUiState(
+    val conversations: List<Conversation> = emptyList(),
+    val isLoading: Boolean = false,
+    val error: String? = null
+)
 
 class HomeViewModel(
     private val repository: ChatRepository = ChatRepository()
 ) : ViewModel() {
 
-    private val _conversations = mutableStateListOf<Conversation>()
-    val conversations: List<Conversation> = _conversations
-
-    private val _isLoading = mutableStateOf(false)
-    val isLoading: State<Boolean> = _isLoading
-
-    private val _error = mutableStateOf<String?>(null)
-    val error: State<String?> = _error
+    private val _uiState = MutableStateFlow(HomeUiState())
+    val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
 
     init {
-        collectSocketEvents()
         loadConversations()
-    }
-
-    private fun collectSocketEvents() {
-        viewModelScope.launch {
-            repository.newMessages.collectLatest { message ->
-                // Update the conversation list with new message (only if conversationId is known)
-                if (message.conversationId.isNotEmpty()) {
-                    updateConversationWithNewMessage(message.conversationId, message.content, message.timestamp)
-                }
-            }
-        }
-
-        viewModelScope.launch {
-            repository.userOnlineEvents.collectLatest { userId ->
-                updateUserOnlineStatus(userId.toString(), true, "")
-            }
-        }
-
-        viewModelScope.launch {
-            repository.userOfflineEvents.collectLatest { (userId, lastSeen) ->
-                updateUserOnlineStatus(userId.toString(), false, lastSeen ?: "")
-            }
-        }
+        collectRealtimeMessages()
     }
 
     fun loadConversations() {
         viewModelScope.launch {
-            _isLoading.value = true
-            _error.value = null
-
+            _uiState.value = _uiState.value.copy(isLoading = true, error = null)
             repository.fetchConversations()
-                .onSuccess { fetchedConversations ->
-                    _conversations.clear()
-                    _conversations.addAll(fetchedConversations)
+                .onSuccess { conversations ->
+                    _uiState.value = HomeUiState(conversations = conversations)
                 }
-                .onFailure { exception ->
-                    _error.value = exception.message
+                .onFailure { error ->
+                    _uiState.value = _uiState.value.copy(isLoading = false, error = error.message)
                 }
-
-            _isLoading.value = false
         }
     }
 
-    private fun updateConversationWithNewMessage(conversationId: String, lastMessage: String, time: String) {
-        val index = _conversations.indexOfFirst { it.id == conversationId }
-        if (index != -1) {
-            val conv = _conversations[index]
-            _conversations[index] = conv.copy(
-                lastMessage = lastMessage,
-                lastMessageTime = time,
-                unreadCount = conv.unreadCount + 1
-            )
-            // Move to top
-            val updated = _conversations.removeAt(index)
-            _conversations.add(0, updated)
-        }
-    }
+    private fun collectRealtimeMessages() {
+        viewModelScope.launch {
+            repository.newMessages.collect { message ->
+                val updated = _uiState.value.conversations.map { conversation ->
+                    if (conversation.id == message.conversationId) {
+                        conversation.copy(
+                            lastMessage = message.content,
+                            updatedAt = message.createdAt,
+                            unreadCount = conversation.unreadCount + 1
+                        )
+                    } else {
+                        conversation
+                    }
+                }.sortedByDescending { it.updatedAt.orEmpty() }
 
-    private fun updateUserOnlineStatus(userId: String, isOnline: Boolean, lastSeen: String) {
-        val index = _conversations.indexOfFirst { it.otherUser.id == userId }
-        if (index != -1) {
-            val conv = _conversations[index]
-            _conversations[index] = conv.copy(
-                otherUser = conv.otherUser.copy(
-                    isOnline = isOnline,
-                    lastSeen = lastSeen
-                )
-            )
+                _uiState.value = _uiState.value.copy(conversations = updated)
+            }
         }
     }
 
     fun clearError() {
-        _error.value = null
+        _uiState.value = _uiState.value.copy(error = null)
     }
 }

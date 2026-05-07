@@ -12,5 +12,6 @@ sealed class Screen(val route: String) {
         fun createRoute(userId: String) = "profile/$userId"
     }
     object Search : Screen("search")
+    object CreateGroup : Screen("create_group")
     object Calls : Screen("calls")
 }

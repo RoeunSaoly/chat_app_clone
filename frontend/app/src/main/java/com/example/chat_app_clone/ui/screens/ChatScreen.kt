@@ -24,6 +24,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.compose.runtime.collectAsState
 import com.example.chat_app_clone.ui.components.MessageBubble
 import com.example.chat_app_clone.viewmodel.ChatViewModel
 
@@ -32,7 +33,7 @@ import com.example.chat_app_clone.viewmodel.ChatViewModel
 fun ChatScreen(
     conversationId: String,
     userId: String,
-    currentUserId: String,
+    currentUserId: Long,
     onBack: () -> Unit = {},
     onProfileClick: () -> Unit = {}
 ) {
@@ -40,17 +41,18 @@ fun ChatScreen(
         factory = ChatViewModelFactory(currentUserId)
     )
 
-    val messages = viewModel.messages
-    val isLoading = viewModel.isLoading.value
-    val error = viewModel.error.value
-    val typingUsers = viewModel.typingUsers.value
+    val uiState by viewModel.uiState.collectAsState()
+    val messages = uiState.messages
+    val isLoading = uiState.isLoading
+    val error = uiState.error
+    val typingUsers = uiState.typingUsers
 
     var inputText by remember { mutableStateOf("") }
     val listState = rememberLazyListState()
 
     // Set conversation when screen opens
     LaunchedEffect(conversationId) {
-        viewModel.setConversationId(conversationId)
+        conversationId.toLongOrNull()?.let { viewModel.openConversation(it) }
     }
 
     // Scroll to bottom when messages change
@@ -125,7 +127,7 @@ fun ChatScreen(
                         if (inputText.isNotEmpty()) {
                             viewModel.sendMessage(inputText)
                             inputText = ""
-                            viewModel.onStopTyping()
+                            viewModel.stopTyping()
                         }
                     }
                 )
@@ -274,7 +276,7 @@ private fun ChatInputBar(
     }
 }
 
-class ChatViewModelFactory(private val currentUserId: String) :
+class ChatViewModelFactory(private val currentUserId: Long) :
     androidx.lifecycle.ViewModelProvider.Factory {
     @Suppress("UNCHECKED_CAST")
     override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
@@ -288,5 +290,5 @@ class ChatViewModelFactory(private val currentUserId: String) :
 @Preview(showBackground = true)
 @Composable
 fun ChatScreenPreview() {
-    ChatScreen(conversationId = "1", userId = "2", currentUserId = "me")
+    ChatScreen(conversationId = "1", userId = "2", currentUserId = 1L)
 }

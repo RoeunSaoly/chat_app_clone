@@ -16,7 +16,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.chat_app_clone.data.model.Message
-import com.example.chat_app_clone.data.model.MessageStatus
 
 @Composable
 fun MessageBubble(
@@ -95,18 +94,18 @@ fun MessageBubble(
                         modifier = Modifier.padding(top = 4.dp) // Push it down slightly relative to text
                     ) {
                         Text(
-                            text = message.timestamp,
+                            text = formatMessageTime(message.createdAt),
                             fontSize = 11.sp,
                             color = Color.Gray
                         )
                         if (isOwn) {
                             Spacer(modifier = Modifier.width(2.dp))
                             Icon(
-                                imageVector = if (message.status == MessageStatus.READ)
+                                imageVector = if (message.status == "seen")
                                     Icons.Default.DoneAll else Icons.Default.Done,
                                 contentDescription = null,
                                 modifier = Modifier.size(12.dp),
-                                tint = if (message.status == MessageStatus.READ)
+                                tint = if (message.status == "seen")
                                     Color(0xFF4CAF50) else Color.Gray
                             )
                         }
@@ -115,4 +114,9 @@ fun MessageBubble(
             }
         }
     }
+}
+
+private fun formatMessageTime(value: String): String {
+    if (value == "Sending...") return value
+    return value.substringAfter("T", value).take(5).ifBlank { value }
 }

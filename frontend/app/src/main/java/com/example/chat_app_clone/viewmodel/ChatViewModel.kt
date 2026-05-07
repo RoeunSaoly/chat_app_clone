@@ -1,180 +1,150 @@
 package com.example.chat_app_clone.viewmodel
 
-import androidx.compose.runtime.State
-import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.chat_app_clone.data.model.Message
-import com.example.chat_app_clone.data.model.MessageStatus
 import com.example.chat_app_clone.data.repository.ChatRepository
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+
+data class ChatUiState(
+    val messages: List<Message> = emptyList(),
+    val typingUsers: List<String> = emptyList(),
+    val isLoading: Boolean = false,
+    val error: String? = null
+)
 
 class ChatViewModel(
     private val repository: ChatRepository = ChatRepository(),
-    private val currentUserId: String
+    private val currentUserId: Long
 ) : ViewModel() {
 
-    private val _messages = mutableStateListOf<Message>()
-    val messages: List<Message> = _messages
+    private val _uiState = MutableStateFlow(ChatUiState())
+    val uiState: StateFlow<ChatUiState> = _uiState.asStateFlow()
 
-    private val _isLoading = mutableStateOf(false)
-    val isLoading: State<Boolean> = _isLoading
-
-    private val _error = mutableStateOf<String?>(null)
-    val error: State<String?> = _error
-
-    private val _typingUsers = mutableStateOf<List<String>>(emptyList())
-    val typingUsers: State<List<String>> = _typingUsers
-
+    private var conversationId: Long? = null
     private var typingJob: Job? = null
-    private var currentConversationId: String = ""
 
     init {
-        collectSocketEvents()
+        collectRealtime()
     }
 
-    private fun collectSocketEvents() {
-        viewModelScope.launch {
-            repository.newMessages.collectLatest { message ->
-                // Only add if it's for the current conversation
-                if (message.senderId != currentUserId) {
-                    _messages.add(message)
-                    // Auto-mark as seen
-                    repository.markAllSeenViaSocket(currentConversationId)
-                }
-            }
-        }
-
-        viewModelScope.launch {
-            repository.typingEvents.collectLatest { (conversationId, users) ->
-                if (conversationId == currentConversationId) {
-                    _typingUsers.value = users
-                }
-            }
-        }
-
-        viewModelScope.launch {
-            repository.messageSeenEvents.collectLatest { (conversationId, messageId) ->
-                if (conversationId == currentConversationId) {
-                    updateMessageStatus(messageId.toString(), MessageStatus.READ)
-                }
-            }
-        }
-    }
-
-    fun setConversationId(conversationId: String) {
-        if (currentConversationId.isNotEmpty()) {
-            repository.leaveConversation(currentConversationId)
-        }
-        currentConversationId = conversationId
-        repository.joinConversation(conversationId)
+    fun openConversation(id: Long) {
+        conversationId?.let(repository::leaveConversation)
+        conversationId = id
+        repository.joinConversation(id)
         loadMessages()
-        // Mark all as seen when entering conversation
-        viewModelScope.launch {
-            repository.markMessagesSeen(conversationId)
-            repository.markAllSeenViaSocket(conversationId)
-        }
+        markSeen()
     }
 
     fun loadMessages() {
-        if (currentConversationId.isEmpty()) return
-
+        val id = conversationId ?: return
         viewModelScope.launch {
-            _isLoading.value = true
-            _error.value = null
-
-            repository.fetchMessages(currentConversationId)
-                .onSuccess { fetchedMessages ->
-                    _messages.clear()
-                    _messages.addAll(fetchedMessages)
+            _uiState.value = _uiState.value.copy(isLoading = true, error = null)
+            repository.fetchMessages(id)
+                .onSuccess { messages ->
+                    _uiState.value = _uiState.value.copy(
+                        messages = messages,
+                        isLoading = false
+                    )
                 }
-                .onFailure { exception ->
-                    _error.value = exception.message
+                .onFailure { error ->
+                    _uiState.value = _uiState.value.copy(isLoading = false, error = error.message)
                 }
-
-            _isLoading.value = false
         }
     }
 
     fun sendMessage(content: String) {
-        if (content.isBlank() || currentConversationId.isEmpty()) return
+        val id = conversationId ?: return
+        if (content.isBlank()) return
 
-        // Optimistic UI update
-        val tempId = System.currentTimeMillis().toString()
-        val optimisticMessage = Message(
-            id = tempId,
+        val tempMessage = Message(
+            id = System.currentTimeMillis() * -1,
+            conversationId = id,
             senderId = currentUserId,
-            conversationId = currentConversationId,
-            content = content,
-            timestamp = "Sending...",
-            status = MessageStatus.SENT,
-            type = com.example.chat_app_clone.data.model.MessageType.TEXT
+            content = content.trim(),
+            messageType = "text",
+            status = "sent",
+            createdAt = "Sending..."
         )
-        _messages.add(optimisticMessage)
+        _uiState.value = _uiState.value.copy(messages = _uiState.value.messages + tempMessage)
 
-        // Send via socket for real-time
-        repository.sendMessageViaSocket(currentConversationId, content)
-
-        // Also send via REST as backup
         viewModelScope.launch {
-            repository.sendMessage(currentConversationId, content)
-                .onSuccess { sentMessage ->
-                    // Replace optimistic message with actual
-                    val index = _messages.indexOfFirst { it.id == tempId }
-                    if (index != -1) {
-                        _messages[index] = sentMessage
-                    }
+            repository.sendMessage(id, content)
+                .onSuccess { sent ->
+                    _uiState.value = _uiState.value.copy(
+                        messages = _uiState.value.messages.map { if (it.id == tempMessage.id) sent else it }
+                    )
                 }
-                .onFailure {
-                    // Mark as failed
-                    val index = _messages.indexOfFirst { it.id == tempId }
-                    if (index != -1) {
-                        _messages[index] = _messages[index].copy(content = "${optimisticMessage.content} (failed)")
-                    }
+                .onFailure { error ->
+                    _uiState.value = _uiState.value.copy(error = error.message)
                 }
         }
     }
 
     fun onTyping() {
-        if (currentConversationId.isEmpty()) return
-
-        repository.startTyping(currentConversationId)
-
-        // Auto-stop typing after 3 seconds
+        val id = conversationId ?: return
         typingJob?.cancel()
+        viewModelScope.launch { repository.updateTyping(id, true) }
         typingJob = viewModelScope.launch {
-            delay(3000)
-            repository.stopTyping(currentConversationId)
+            delay(1200)
+            repository.updateTyping(id, false)
         }
     }
 
-    fun onStopTyping() {
+    fun stopTyping() {
+        val id = conversationId ?: return
         typingJob?.cancel()
-        if (currentConversationId.isNotEmpty()) {
-            repository.stopTyping(currentConversationId)
-        }
-    }
-
-    private fun updateMessageStatus(messageId: String, status: MessageStatus) {
-        val index = _messages.indexOfFirst { it.id == messageId }
-        if (index != -1) {
-            _messages[index] = _messages[index].copy(status = status)
-        }
+        viewModelScope.launch { repository.updateTyping(id, false) }
     }
 
     fun clearError() {
-        _error.value = null
+        _uiState.value = _uiState.value.copy(error = null)
+    }
+
+    private fun markSeen() {
+        val id = conversationId ?: return
+        viewModelScope.launch { repository.markMessagesSeen(id) }
+    }
+
+    private fun collectRealtime() {
+        viewModelScope.launch {
+            repository.newMessages.collect { message ->
+                if (message.conversationId == conversationId && _uiState.value.messages.none { it.id == message.id }) {
+                    _uiState.value = _uiState.value.copy(messages = _uiState.value.messages + message)
+                    if (message.senderId != currentUserId) markSeen()
+                }
+            }
+        }
+
+        viewModelScope.launch {
+            repository.typingEvents.collect { (id, names) ->
+                if (id == conversationId) {
+                    _uiState.value = _uiState.value.copy(typingUsers = names)
+                }
+            }
+        }
+
+        viewModelScope.launch {
+            repository.messageSeenEvents.collect { (id, messageIds) ->
+                if (id == conversationId) {
+                    _uiState.value = _uiState.value.copy(
+                        messages = _uiState.value.messages.map {
+                            if (it.id in messageIds) it.copy(status = "seen") else it
+                        }
+                    )
+                }
+            }
+        }
     }
 
     override fun onCleared() {
-        super.onCleared()
-        if (currentConversationId.isNotEmpty()) {
-            repository.leaveConversation(currentConversationId)
-        }
+        conversationId?.let(repository::leaveConversation)
         typingJob?.cancel()
+        super.onCleared()
     }
 }

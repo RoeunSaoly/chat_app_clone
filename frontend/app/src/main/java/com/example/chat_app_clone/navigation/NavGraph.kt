@@ -1,6 +1,7 @@
 package com.example.chat_app_clone.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -8,7 +9,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.example.chat_app_clone.data.SampleData
+import com.example.chat_app_clone.MainActivity
 import com.example.chat_app_clone.ui.screens.*
 
 @Composable
@@ -17,6 +18,9 @@ fun NavGraph(
     startDestination: String = Screen.Welcome.route,
     modifier: Modifier = Modifier // ✅ added modifier parameter
 ) {
+    val context = LocalContext.current
+    val currentUserId = MainActivity.getCurrentUserId(context)
+
     NavHost(
         navController = navController,
         startDestination = startDestination,
@@ -46,8 +50,8 @@ fun NavGraph(
         composable(Screen.Register.route) {
             RegisterScreen(
                 onRegisterSuccess = {
-                    navController.navigate(Screen.Home.route) {
-                        popUpTo(Screen.Welcome.route) { inclusive = true }
+                    navController.navigate(Screen.Login.route) {
+                        popUpTo(Screen.Register.route) { inclusive = true }
                     }
                 },
                 onBackToLogin = { navController.popBackStack() }
@@ -58,11 +62,16 @@ fun NavGraph(
         composable(Screen.Home.route) {
             HomeScreen(
                 onConversationClick = { conversation ->
+                    val mine = currentUserId.toLongOrNull() ?: 0L
+                    val otherId = conversation.otherUser?.userId
+                        ?: conversation.members.firstOrNull { it.userId != mine }?.userId
+                        ?: 0L
                     navController.navigate(
-                        Screen.Chat.createRoute(conversation.id, conversation.otherUser.id)
+                        Screen.Chat.createRoute(conversation.id.toString(), otherId.toString())
                     )
                 },
                 onSearchClick = { navController.navigate(Screen.Search.route) },
+                onCreateGroupClick = { navController.navigate(Screen.CreateGroup.route) },
                 onCallsTabClick = { navController.navigate(Screen.Calls.route) },
                 onLogoutClick = {
                     navController.navigate(Screen.Welcome.route) {
@@ -85,7 +94,7 @@ fun NavGraph(
             ChatScreen(
                 conversationId = conversationId,
                 userId = userId,
-                currentUserId = "me", // TODO: Get from authenticated user session
+                currentUserId = currentUserId.toLongOrNull() ?: 0L,
                 onBack = { navController.popBackStack() },
                 onProfileClick = { navController.navigate(Screen.Profile.createRoute(userId)) }
             )
@@ -108,12 +117,27 @@ fun NavGraph(
         composable(Screen.Search.route) {
             SearchScreen(
                 onBack = { navController.popBackStack() },
-                onUserClick = { user ->
-                    val conversation = SampleData.conversations.find { it.otherUser.id == user.id }
-                    val conversationId = conversation?.id ?: "new_${user.id}"
+                onConversationCreated = { conversation ->
+                    val mine = currentUserId.toLongOrNull() ?: 0L
+                    val otherId = conversation.otherUser?.userId
+                        ?: conversation.members.firstOrNull { it.userId != mine }?.userId
+                        ?: 0L
                     navController.navigate(
-                        Screen.Chat.createRoute(conversationId, user.id)
-                    )
+                        Screen.Chat.createRoute(conversation.id.toString(), otherId.toString())
+                    ) {
+                        popUpTo(Screen.Search.route) { inclusive = true }
+                    }
+                }
+            )
+        }
+
+        composable(Screen.CreateGroup.route) {
+            CreateGroupScreen(
+                onBack = { navController.popBackStack() },
+                onConversationCreated = { conversation ->
+                    navController.navigate(Screen.Chat.createRoute(conversation.id.toString(), "0")) {
+                        popUpTo(Screen.CreateGroup.route) { inclusive = true }
+                    }
                 }
             )
         }
