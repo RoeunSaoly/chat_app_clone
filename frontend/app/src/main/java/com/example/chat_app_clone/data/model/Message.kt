@@ -15,6 +15,8 @@ data class Message(
     val messageType: String = "text",
     @SerializedName("status")
     val status: String = "sent",
+    @SerializedName("deleted_for_everyone")
+    val deletedForEveryone: Boolean = false,
     @SerializedName("created_at")
     val createdAt: String,
     @SerializedName("sender_username")

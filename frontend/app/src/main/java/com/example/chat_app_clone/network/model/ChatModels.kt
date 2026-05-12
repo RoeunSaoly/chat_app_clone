@@ -53,3 +53,9 @@ data class UserOfflineEvent(
     @SerializedName("last_seen") val lastSeen: String? = null
 )
 
+data class Pagination(
+    @SerializedName("limit") val limit: Int,
+    @SerializedName("offset") val offset: Int,
+    @SerializedName("count") val count: Int
+)
+

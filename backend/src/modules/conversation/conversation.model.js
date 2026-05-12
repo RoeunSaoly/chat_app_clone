@@ -157,3 +157,25 @@ export const isConversationMember = async (conversationId, userId) => {
   return result.rowCount > 0;
 };
 
+/**
+ * Search conversations by name or participant username.
+ */
+export const searchConversations = async (userId, query) => {
+  const result = await pool.query(
+    `SELECT DISTINCT c.* 
+     FROM conversations c
+     JOIN conversation_members cm ON cm.conversation_id = c.id
+     JOIN users u ON u.id = cm.user_id
+     WHERE cm.user_id IN (
+       SELECT cm2.user_id 
+       FROM conversation_members cm2 
+       WHERE cm2.conversation_id IN (
+         SELECT cm3.conversation_id FROM conversation_members cm3 WHERE cm3.user_id = $1
+       )
+     )
+     AND (c.name ILIKE $2 OR u.username ILIKE $2)
+     ORDER BY c.created_at DESC`,
+    [userId, `%${query}%`]
+  );
+  return result.rows;
+};

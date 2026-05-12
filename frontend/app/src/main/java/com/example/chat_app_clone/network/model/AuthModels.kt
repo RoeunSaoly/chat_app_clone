@@ -1,6 +1,7 @@
 package com.example.chat_app_clone.network.model
 
 import com.google.gson.annotations.SerializedName
+import com.example.chat_app_clone.data.model.User
 
 data class LoginRequest(
     @SerializedName("email")
@@ -21,12 +22,17 @@ data class RegisterRequest(
 data class AuthResponse(
     @SerializedName("success")
     val success: Boolean = false,
-    @SerializedName("message")
-    val message: String? = null,
+    @SerializedName("accessToken")
+    val accessToken: String? = null,
+    @SerializedName("refreshToken")
+    val refreshToken: String? = null,
     @SerializedName("user")
-    val user: UserResponse? = null,
-    @SerializedName("token")
-    val token: String? = null,
+    val user: User? = null,
     @SerializedName("error")
     val error: String? = null
+)
+
+data class RefreshRequest(
+    @SerializedName("refreshToken")
+    val refreshToken: String
 )

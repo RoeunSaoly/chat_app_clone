@@ -2,13 +2,8 @@ package com.example.chat_app_clone.data.repository
 
 import com.example.chat_app_clone.data.model.Conversation
 import com.example.chat_app_clone.data.model.Message
-import com.example.chat_app_clone.network.MarkSeenRequest
-import com.example.chat_app_clone.network.RetrofitClient
-import com.example.chat_app_clone.network.SocketManager
-import com.example.chat_app_clone.network.TypingRequest
-import com.example.chat_app_clone.network.CreateGroupConversationRequest
-import com.example.chat_app_clone.network.CreatePrivateConversationRequest
-import com.example.chat_app_clone.network.model.SendMessageRequest
+import com.example.chat_app_clone.network.*
+import com.example.chat_app_clone.network.model.*
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
@@ -27,9 +22,28 @@ class ChatRepository {
     private val _messageSeenEvents = MutableSharedFlow<Pair<Long, List<Long>>>(extraBufferCapacity = 16)
     val messageSeenEvents: SharedFlow<Pair<Long, List<Long>>> = _messageSeenEvents.asSharedFlow()
 
+    private val _deletedMessageEvents = MutableSharedFlow<MessageDeletedEvent>(extraBufferCapacity = 16)
+    val deletedMessageEvents: SharedFlow<MessageDeletedEvent> = _deletedMessageEvents.asSharedFlow()
+
     init {
-        socketManager.onNewMessage { message ->
+        socketManager.onNewMessage { response ->
+            val message = Message(
+                id = response.id,
+                conversationId = response.conversationId,
+                senderId = response.senderId,
+                content = response.content,
+                messageType = response.messageType,
+                status = response.status,
+                createdAt = response.createdAt,
+                senderUsername = response.senderUsername,
+                senderAvatar = response.senderAvatar,
+                deletedForEveryone = response.deletedForEveryone ?: false
+            )
             _newMessages.tryEmit(message)
+        }
+
+        socketManager.onMessageDeleted { event ->
+            _deletedMessageEvents.tryEmit(event)
         }
 
         socketManager.onTyping { event ->
@@ -43,22 +57,18 @@ class ChatRepository {
         }
     }
 
+    suspend fun deleteMessage(messageId: Long, forEveryone: Boolean): Result<Unit> = runCatching {
+        val type = if (forEveryone) "everyone" else "me"
+        val response = chatApi.deleteMessage(messageId.toString(), type)
+        if (!response.isSuccessful) throw Exception("Failed to delete message")
+    }
+
     suspend fun fetchConversations(): Result<List<Conversation>> = runCatching {
-        val response = chatApi.getConversations()
-        val body = response.body()
-        if (!response.isSuccessful || body?.success != true) {
-            throw Exception(body?.error ?: "Failed to fetch conversations")
-        }
-        body.data.orEmpty()
+        com.example.chat_app_clone.data.SampleData.conversations
     }
 
     suspend fun fetchMessages(conversationId: Long): Result<List<Message>> = runCatching {
-        val response = chatApi.getMessages(conversationId.toString())
-        val body = response.body()
-        if (!response.isSuccessful || body?.success != true) {
-            throw Exception(body?.error ?: "Failed to fetch messages")
-        }
-        body.data.orEmpty()
+        com.example.chat_app_clone.data.SampleData.getMessagesForConversation(conversationId.toString())
     }
 
     suspend fun startPrivateChat(userId: Long): Result<Conversation> = runCatching {

@@ -10,7 +10,8 @@
     "dev": "nodemon server.js",
     "start": "node server.js",
     "migrate": "node src/scripts/migrate.js",
-    "migrate:down": "node src/scripts/migrateDown.js"
+    "migrate:down": "node src/scripts/migrateDown.js",
+    "seed": "node src/scripts/seedUsers.js"
   },
   "dependencies": {
     "@socket.io/redis-adapter": "^8.3.0",
@@ -26,7 +27,8 @@
     "pg-hstore": "^2.3.4",
     "redis": "^5.11.0",
     "sequelize": "^6.37.8",
-    "socket.io": "^4.8.3"
+    "socket.io": "^4.8.3",
+    "zod": "^3.23.8"
   },
   "devDependencies": {
     "nodemon": "^3.1.14",

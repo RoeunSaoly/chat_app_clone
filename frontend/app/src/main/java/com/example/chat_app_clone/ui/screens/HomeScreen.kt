@@ -6,14 +6,15 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -59,87 +60,63 @@ fun HomeScreen(
             TopAppBar(
                 title = {
                     Text(
-                        "Messenger",
-                        fontWeight = FontWeight.ExtraBold,
-                        fontSize = 26.sp,
+                        "Chats",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 28.sp,
                         color = MaterialTheme.colorScheme.onSurface
                     )
                 },
-                actions = {
-                    // Refresh button
+                navigationIcon = {
                     Box(
                         modifier = Modifier
-                            .size(36.dp)
+                            .padding(start = 16.dp)
+                            .size(40.dp)
                             .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.surfaceVariant)
-                            .clickable { viewModel.loadConversations() },
+                            .background(if (MaterialTheme.colorScheme.surface == Color.White) Color(0xFFF0F2F5) else Color(0xFF3E4042))
+                            .clickable { },
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
-                            Icons.Default.Refresh,
-                            contentDescription = "Refresh",
-                            modifier = Modifier.size(20.dp),
+                            Icons.Default.Menu,
+                            contentDescription = "Menu",
+                            modifier = Modifier.size(24.dp),
                             tint = MaterialTheme.colorScheme.onSurface
                         )
                     }
-                    Spacer(modifier = Modifier.width(8.dp))
-                    // Camera icon
+                },
+                actions = {
                     Box(
                         modifier = Modifier
-                            .size(36.dp)
+                            .size(40.dp)
                             .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.surfaceVariant)
+                            .background(if (MaterialTheme.colorScheme.surface == Color.White) Color(0xFFF0F2F5) else Color(0xFF3E4042))
                             .clickable { onCreateGroupClick() },
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
                             Icons.Default.CameraAlt,
                             contentDescription = "Camera",
-                            modifier = Modifier.size(20.dp),
+                            modifier = Modifier.size(22.dp),
                             tint = MaterialTheme.colorScheme.onSurface
                         )
                     }
-                    Spacer(modifier = Modifier.width(8.dp))
-                    // Edit/compose icon
+                    Spacer(modifier = Modifier.width(12.dp))
                     Box(
                         modifier = Modifier
-                            .size(36.dp)
+                            .size(40.dp)
                             .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.surfaceVariant)
+                            .background(if (MaterialTheme.colorScheme.surface == Color.White) Color(0xFFF0F2F5) else Color(0xFF3E4042))
                             .clickable { },
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
                             Icons.Default.Edit,
                             contentDescription = "New chat",
-                            modifier = Modifier.size(20.dp),
+                            modifier = Modifier.size(22.dp),
                             tint = MaterialTheme.colorScheme.onSurface
                         )
                     }
-                    Spacer(modifier = Modifier.width(12.dp))
-                    // Logout icon
-                    Box(
-                        modifier = Modifier
-                            .size(36.dp)
-                            .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.surfaceVariant)
-                            .clickable { onLogoutClick() },
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            Icons.AutoMirrored.Filled.Logout,
-                            contentDescription = "Logout",
-                            modifier = Modifier.size(20.dp),
-                            tint = MaterialTheme.colorScheme.onSurface
-                        )
-                    }
-                    Spacer(modifier = Modifier.width(8.dp))
-                    // Avatar
-                    UserAvatar(
-                        name = SampleData.currentUser.displayName,
-                        size = 36
-                    )
-                    Spacer(modifier = Modifier.width(12.dp))
+                    Spacer(modifier = Modifier.width(16.dp))
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.surface
@@ -151,7 +128,7 @@ fun HomeScreen(
                 selectedIndex = selectedTab,
                 onItemSelected = { index ->
                     selectedTab = index
-                    if (index == 4) onCallsTabClick()
+                    if (index == 1) onCallsTabClick()
                 }
             )
         }
@@ -177,8 +154,8 @@ fun HomeScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(horizontal = 16.dp, vertical = 8.dp)
-                            .clip(androidx.compose.foundation.shape.RoundedCornerShape(24.dp))
-                            .background(MaterialTheme.colorScheme.surfaceVariant)
+                            .clip(RoundedCornerShape(24.dp))
+                            .background(if (MaterialTheme.colorScheme.surface == Color.White) Color(0xFFF0F2F5) else Color(0xFF3E4042))
                             .clickable(onClick = onSearchClick)
                             .padding(horizontal = 16.dp, vertical = 10.dp)
                     ) {
@@ -186,14 +163,14 @@ fun HomeScreen(
                             Icon(
                                 Icons.Default.Search,
                                 contentDescription = "Search",
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                tint = Color.Gray,
                                 modifier = Modifier.size(20.dp)
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
                                 "Search",
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                fontSize = 15.sp
+                                color = Color.Gray,
+                                fontSize = 16.sp
                             )
                         }
                     }
@@ -258,6 +235,7 @@ fun HomeScreen(
                         ConversationItem(
                             conversation = conversation,
                             currentUserId = currentUserId,
+                            isTyping = uiState.typingStatuses[conversation.id]?.isNotEmpty() ?: false,
                             onClick = { onConversationClick(conversation) }
                         )
                     }

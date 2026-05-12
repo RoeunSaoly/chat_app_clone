@@ -21,6 +21,9 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.chat_app_clone.viewmodel.RegisterViewModel
 import com.example.chat_app_clone.network.AuthService
 import com.example.chat_app_clone.ui.theme.MessengerBlue
 import kotlinx.coroutines.Dispatchers
@@ -31,18 +34,23 @@ import kotlinx.coroutines.withContext
 @Composable
 fun RegisterScreen(
     onRegisterSuccess: () -> Unit = {},
-    onBackToLogin: () -> Unit = {}
+    onBackToLogin: () -> Unit = {},
+    viewModel: RegisterViewModel = viewModel()
 ) {
+    val uiState by viewModel.uiState.collectAsState()
+    
     var name by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
-    var isLoading by remember { mutableStateOf(false) }
-    var errorMessage by remember { mutableStateOf<String?>(null) }
-    
-    val authService = remember { AuthService() }
-    val coroutineScope = rememberCoroutineScope()
+
+    // Handle success
+    LaunchedEffect(uiState.isSuccess) {
+        if (uiState.isSuccess) {
+            onRegisterSuccess()
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -64,7 +72,7 @@ fun RegisterScreen(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = "Join Messenger",
+                "Join Messenger",
                 fontSize = 28.sp,
                 fontWeight = FontWeight.Bold,
                 color = MessengerBlue,
@@ -72,7 +80,7 @@ fun RegisterScreen(
             )
             
             Text(
-                text = "Connect with your friends and family",
+                "Connect with your friends and family",
                 fontSize = 14.sp,
                 color = Color.Gray,
                 modifier = Modifier.padding(bottom = 32.dp)
@@ -85,7 +93,7 @@ fun RegisterScreen(
                 modifier = Modifier.fillMaxWidth(),
                 leadingIcon = { Icon(Icons.Default.Person, contentDescription = null) },
                 singleLine = true,
-                enabled = !isLoading
+                enabled = !uiState.isLoading
             )
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -98,7 +106,7 @@ fun RegisterScreen(
                 leadingIcon = { Icon(Icons.Default.Email, contentDescription = null) },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
                 singleLine = true,
-                enabled = !isLoading
+                enabled = !uiState.isLoading
             )
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -118,7 +126,7 @@ fun RegisterScreen(
                 },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                 singleLine = true,
-                enabled = !isLoading
+                enabled = !uiState.isLoading
             )
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -132,14 +140,14 @@ fun RegisterScreen(
                 visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                 singleLine = true,
-                enabled = !isLoading
+                enabled = !uiState.isLoading
             )
 
             // Error message
-            if (errorMessage != null) {
+            uiState.error?.let { error ->
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = errorMessage!!,
+                    text = error,
                     color = MaterialTheme.colorScheme.error,
                     fontSize = 14.sp
                 )
@@ -149,45 +157,21 @@ fun RegisterScreen(
 
             Button(
                 onClick = {
-                    // Validate passwords match
                     if (password != confirmPassword) {
-                        errorMessage = "Passwords do not match"
-                        return@Button
-                    }
-                    
-                    // Validate password length
-                    if (password.length < 6) {
-                        errorMessage = "Password must be at least 6 characters"
-                        return@Button
-                    }
-                    
-                    coroutineScope.launch {
-                        isLoading = true
-                        errorMessage = null
-                        
-                        val result = withContext(Dispatchers.IO) {
-                            authService.register(name, email, password)
-                        }
-                        
-                        result.fold(
-                            onSuccess = { response ->
-                                isLoading = false
-                                onRegisterSuccess()
-                            },
-                            onFailure = { exception ->
-                                isLoading = false
-                                errorMessage = exception.message ?: "Registration failed. Please try again."
-                            }
-                        )
+                        viewModel.setError("Passwords do not match")
+                    } else if (password.length < 6) {
+                        viewModel.setError("Password must be at least 6 characters")
+                    } else {
+                        viewModel.register(name, email, password)
                     }
                 },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(50.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = MessengerBlue),
-                enabled = !isLoading && name.isNotBlank() && email.isNotBlank() && password.isNotBlank() && confirmPassword.isNotBlank()
+                enabled = !uiState.isLoading && name.isNotBlank() && email.isNotBlank() && password.isNotBlank() && confirmPassword.isNotBlank()
             ) {
-                if (isLoading) {
+                if (uiState.isLoading) {
                     CircularProgressIndicator(
                         modifier = Modifier.size(24.dp),
                         color = MaterialTheme.colorScheme.onPrimary
@@ -201,7 +185,7 @@ fun RegisterScreen(
 
             TextButton(
                 onClick = onBackToLogin,
-                enabled = !isLoading
+                enabled = !uiState.isLoading
             ) {
                 Text("Already have an account? Log In", color = MessengerBlue)
             }

@@ -6,6 +6,7 @@ import com.example.chat_app_clone.network.model.MessagesSeenEvent
 import com.example.chat_app_clone.network.model.TypingEvent
 import com.example.chat_app_clone.network.model.UserOfflineEvent
 import com.example.chat_app_clone.network.model.UserOnlineEvent
+import com.example.chat_app_clone.network.MessageDeletedEvent
 import com.google.gson.Gson
 import io.socket.client.IO
 import io.socket.client.Socket
@@ -15,7 +16,7 @@ import java.net.URISyntaxException
 class SocketManager private constructor() {
 
     private var mSocket: Socket? = null
-    private val gson = Gson()
+    val gson = Gson()
 
     companion object {
         @Volatile
@@ -136,6 +137,16 @@ class SocketManager private constructor() {
     fun onMessageDelivered(callback: (JSONObject) -> Unit) {
         mSocket?.on("message_delivered") { args ->
             args.firstOrNull()?.let { callback(it as JSONObject) }
+        }
+    }
+
+    fun onMessageDeleted(callback: (MessageDeletedEvent) -> Unit) {
+        mSocket?.on("message_deleted") { args ->
+            if (args.isNotEmpty()) {
+                val json = gson.toJson(args[0])
+                val event = gson.fromJson(json, MessageDeletedEvent::class.java)
+                callback(event)
+            }
         }
     }
 

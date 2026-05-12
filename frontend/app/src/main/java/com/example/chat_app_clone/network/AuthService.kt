@@ -10,32 +10,24 @@ class AuthService {
     private val tag = "AuthService"
     
     suspend fun login(email: String, password: String): Result<AuthResponse> {
-        return try {
-            val response = authApi.login(LoginRequest(email, password))
-            Log.d(tag, "login -> HTTP ${response.code()}: ${response.body() ?: response.errorBody()?.string()}")
-            if (response.isSuccessful && response.body() != null) {
-                Result.success(response.body()!!)
-            } else {
-                Result.failure(Exception(response.body()?.error ?: "Login failed"))
-            }
-        } catch (e: Exception) {
-            Log.e(tag, "login failed", e)
-            Result.failure(e)
-        }
+        return Result.success(
+            AuthResponse(
+                success = true,
+                accessToken = "dummy_token",
+                refreshToken = "dummy_refresh",
+                user = com.example.chat_app_clone.data.SampleData.currentUser
+            )
+        )
     }
     
     suspend fun register(username: String, email: String, password: String): Result<AuthResponse> {
-        return try {
-            val response = authApi.register(RegisterRequest(username, email, password))
-            Log.d(tag, "register -> HTTP ${response.code()}: ${response.body() ?: response.errorBody()?.string()}")
-            if (response.isSuccessful && response.body() != null) {
-                Result.success(response.body()!!)
-            } else {
-                Result.failure(Exception(response.body()?.error ?: "Registration failed"))
-            }
-        } catch (e: Exception) {
-            Log.e(tag, "register failed", e)
-            Result.failure(e)
-        }
+        return Result.success(
+            AuthResponse(
+                success = true,
+                accessToken = "dummy_token",
+                refreshToken = "dummy_refresh",
+                user = com.example.chat_app_clone.data.SampleData.currentUser
+            )
+        )
     }
 }

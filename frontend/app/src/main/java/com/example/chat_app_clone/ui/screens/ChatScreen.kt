@@ -9,7 +9,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -26,7 +25,11 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.runtime.collectAsState
 import com.example.chat_app_clone.ui.components.MessageBubble
+import com.example.chat_app_clone.ui.components.UserAvatar
+import com.example.chat_app_clone.ui.theme.MessengerBlue
+import com.example.chat_app_clone.ui.theme.OnlineGreen
 import com.example.chat_app_clone.viewmodel.ChatViewModel
+import com.example.chat_app_clone.viewmodel.ChatViewModelFactory
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -62,33 +65,26 @@ fun ChatScreen(
         }
     }
 
-    // Beautiful Pastel Gradient Background
-    val backgroundBrush = Brush.verticalGradient(
-        colors = listOf(
-            Color(0xFFFDE8ED),
-            Color(0xFFE2C4D3)
-        )
-    )
-
-    Box(modifier = Modifier.fillMaxSize().background(backgroundBrush)) {
+    Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
         Scaffold(
-            containerColor = Color.Transparent,
+            containerColor = MaterialTheme.colorScheme.background,
             topBar = {
                 TopAppBar(
                     title = {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text(
-                                text = "Chat",
-                                fontWeight = FontWeight.Medium,
-                                fontSize = 18.sp,
-                                color = Color.Black
-                            )
-                            if (typingUsers.isNotEmpty()) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            UserAvatar(name = "User", size = 36) // Simplified, usually you'd get the real name
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Column {
                                 Text(
-                                    text = typingUsers.joinToString(", ") + " is typing...",
+                                    text = "Chat", // Ideally conversation name
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 17.sp,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                                Text(
+                                    text = if (typingUsers.isNotEmpty()) "is typing..." else "Active now",
                                     fontSize = 12.sp,
-                                    color = Color(0xFF4CAF50),
-                                    textAlign = TextAlign.Center
+                                    color = if (typingUsers.isNotEmpty()) OnlineGreen else Color.Gray
                                 )
                             }
                         }
@@ -98,21 +94,27 @@ fun ChatScreen(
                             Icon(
                                 Icons.Default.ArrowBack,
                                 contentDescription = "Back",
-                                tint = Color.Black
+                                tint = MessengerBlue
                             )
                         }
                     },
                     actions = {
+                        IconButton(onClick = {}) {
+                            Icon(Icons.Default.Call, contentDescription = "Call", tint = MessengerBlue)
+                        }
+                        IconButton(onClick = {}) {
+                            Icon(Icons.Default.VideoCall, contentDescription = "Video", tint = MessengerBlue)
+                        }
                         IconButton(onClick = onProfileClick) {
                             Icon(
-                                Icons.Default.MoreHoriz,
-                                contentDescription = "More",
-                                tint = Color.Black
+                                Icons.Default.Info,
+                                contentDescription = "Info",
+                                tint = MessengerBlue
                             )
                         }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = Color.Transparent
+                        containerColor = MaterialTheme.colorScheme.surface
                     )
                 )
             },
@@ -154,11 +156,36 @@ fun ChatScreen(
                 ) {
                     items(messages) { message ->
                         val isOwn = message.senderId == currentUserId
+                        var showDeleteDialog by remember { mutableStateOf(false) }
+
+                        if (showDeleteDialog) {
+                            AlertDialog(
+                                onDismissRequest = { showDeleteDialog = false },
+                                title = { Text("Delete message?") },
+                                text = { Text("Do you want to delete this message for everyone or just for you?") },
+                                confirmButton = {
+                                    if (isOwn) {
+                                        TextButton(onClick = {
+                                            viewModel.deleteMessage(message.id, true)
+                                            showDeleteDialog = false
+                                        }) { Text("Delete for everyone", color = Color.Red) }
+                                    }
+                                },
+                                dismissButton = {
+                                    TextButton(onClick = {
+                                        viewModel.deleteMessage(message.id, false)
+                                        showDeleteDialog = false
+                                    }) { Text("Delete for me") }
+                                }
+                            )
+                        }
+
                         MessageBubble(
                             message = message,
                             isOwn = isOwn,
                             showAvatar = !isOwn,
-                            senderName = if (isOwn) "You" else "User"
+                            senderName = if (isOwn) "You" else "User",
+                            onLongClick = { showDeleteDialog = true }
                         )
                     }
 
@@ -216,74 +243,54 @@ private fun ChatInputBar(
         modifier = Modifier
             .fillMaxWidth()
             .navigationBarsPadding()
-            .padding(horizontal = 16.dp, vertical = 12.dp)
-            .height(56.dp)
-            .clip(RoundedCornerShape(28.dp))
-            .background(Color.White)
-            .padding(horizontal = 8.dp),
+            .padding(horizontal = 8.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         IconButton(onClick = {}) {
-            Box(
-                modifier = Modifier
-                    .size(32.dp)
-                    .clip(CircleShape)
-                    .background(Color(0xFFF0F0F0)),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    Icons.Default.Add,
-                    contentDescription = "Attach",
-                    tint = Color.Black,
-                    modifier = Modifier.size(20.dp)
-                )
-            }
+            Icon(Icons.Default.AddCircle, contentDescription = "More", tint = MessengerBlue)
+        }
+        IconButton(onClick = {}) {
+            Icon(Icons.Default.CameraAlt, contentDescription = "Camera", tint = MessengerBlue)
+        }
+        IconButton(onClick = {}) {
+            Icon(Icons.Default.Image, contentDescription = "Gallery", tint = MessengerBlue)
+        }
+        IconButton(onClick = {}) {
+            Icon(Icons.Default.Mic, contentDescription = "Mic", tint = MessengerBlue)
         }
 
-        Spacer(modifier = Modifier.width(8.dp))
-
         Box(
-            modifier = Modifier.weight(1f),
+            modifier = Modifier
+                .weight(1f)
+                .clip(RoundedCornerShape(20.dp))
+                .background(if (MaterialTheme.colorScheme.surface == Color.White) Color(0xFFF0F2F5) else Color(0xFF3E4042))
+                .padding(horizontal = 12.dp, vertical = 8.dp),
             contentAlignment = Alignment.CenterStart
         ) {
             if (text.isEmpty()) {
-                Text("Type a message here...", color = Color.Gray.copy(alpha = 0.7f), fontSize = 15.sp)
+                Text("Aa", color = Color.Gray, fontSize = 16.sp)
             }
             BasicTextField(
                 value = text,
                 onValueChange = onTextChange,
                 textStyle = LocalTextStyle.current.copy(
-                    color = Color.Black,
-                    fontSize = 15.sp
+                    color = MaterialTheme.colorScheme.onSurface,
+                    fontSize = 16.sp
                 ),
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true
+                modifier = Modifier.fillMaxWidth()
             )
         }
-
-        Spacer(modifier = Modifier.width(8.dp))
 
         IconButton(
             onClick = { if (text.isNotEmpty()) onSend() }
         ) {
             Icon(
-                imageVector = if (text.isNotEmpty()) Icons.AutoMirrored.Filled.Send else Icons.Default.Mic,
-                contentDescription = if (text.isNotEmpty()) "Send" else "Voice",
-                tint = Color.Black,
+                imageVector = if (text.isNotEmpty()) Icons.Default.Send else Icons.Default.ThumbUp,
+                contentDescription = "Send",
+                tint = MessengerBlue,
                 modifier = Modifier.size(24.dp)
             )
         }
-    }
-}
-
-class ChatViewModelFactory(private val currentUserId: Long) :
-    androidx.lifecycle.ViewModelProvider.Factory {
-    @Suppress("UNCHECKED_CAST")
-    override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
-        if (modelClass.isAssignableFrom(ChatViewModel::class.java)) {
-            return ChatViewModel(currentUserId = currentUserId) as T
-        }
-        throw IllegalArgumentException("Unknown ViewModel class")
     }
 }
 

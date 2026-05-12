@@ -22,6 +22,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.chat_app_clone.MainActivity
 import com.example.chat_app_clone.network.AuthService
+import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.chat_app_clone.viewmodel.LoginViewModel
 import com.example.chat_app_clone.network.RetrofitClient
 import com.example.chat_app_clone.network.SocketManager
 import com.example.chat_app_clone.ui.theme.MessengerBlue
@@ -32,17 +35,30 @@ import kotlinx.coroutines.withContext
 @Composable
 fun LoginScreen(
     onLoginSuccess: () -> Unit = {},
-    onNavigateToRegister: () -> Unit = {}
+    onNavigateToRegister: () -> Unit = {},
+    viewModel: LoginViewModel = viewModel()
 ) {
     val context = LocalContext.current
+    val uiState by viewModel.uiState.collectAsState()
+    
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
-    var isLoading by remember { mutableStateOf(false) }
-    var errorMessage by remember { mutableStateOf<String?>(null) }
-    
-    val authService = remember { AuthService() }
-    val coroutineScope = rememberCoroutineScope()
+
+    // Handle successful login
+    LaunchedEffect(uiState.authResponse) {
+        uiState.authResponse?.let { response ->
+            if (response.success && response.accessToken != null) {
+                com.example.chat_app_clone.MainActivity.saveToken(context, response.accessToken, response.refreshToken ?: "")
+                response.user?.let { user ->
+                    com.example.chat_app_clone.MainActivity.saveCurrentUserId(context, user.id, user.username ?: "")
+                }
+                com.example.chat_app_clone.network.RetrofitClient.setAuthToken(response.accessToken)
+                com.example.chat_app_clone.network.SocketManager.getInstance().connectSocket(response.accessToken)
+                onLoginSuccess()
+            }
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -51,7 +67,7 @@ fun LoginScreen(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        // App Logo or Icon (using a placeholder icon)
+        // App Logo
         Icon(
             imageVector = Icons.Default.Email,
             contentDescription = "Messenger Logo",
@@ -62,14 +78,14 @@ fun LoginScreen(
         Spacer(modifier = Modifier.height(24.dp))
 
         Text(
-            text = "Welcome to Messenger",
+            "Welcome to Messenger",
             fontSize = 28.sp,
             fontWeight = FontWeight.Bold,
             color = MessengerBlue
         )
         
         Text(
-            text = "Log in to your account",
+            "Log in to your account",
             fontSize = 16.sp,
             color = Color.Gray,
             modifier = Modifier.padding(vertical = 8.dp)
@@ -85,7 +101,7 @@ fun LoginScreen(
             leadingIcon = { Icon(Icons.Default.Email, contentDescription = null) },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
             singleLine = true,
-            enabled = !isLoading
+            enabled = !uiState.isLoading
         )
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -105,14 +121,14 @@ fun LoginScreen(
             },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
             singleLine = true,
-            enabled = !isLoading
+            enabled = !uiState.isLoading
         )
 
         // Error message
-        if (errorMessage != null) {
+        uiState.error?.let { error ->
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = errorMessage!!,
+                text = error,
                 color = MaterialTheme.colorScheme.error,
                 fontSize = 14.sp
             )
@@ -121,41 +137,14 @@ fun LoginScreen(
         Spacer(modifier = Modifier.height(32.dp))
 
         Button(
-            onClick = {
-                coroutineScope.launch {
-                    isLoading = true
-                    errorMessage = null
-                    
-                    val result = withContext(Dispatchers.IO) {
-                        authService.login(email, password)
-                    }
-                    
-                    result.fold(
-                        onSuccess = { response ->
-                            isLoading = false
-                            response.token?.let { token ->
-                                // Save token and initialize networking
-                                MainActivity.saveToken(context, token)
-                                response.user?.id?.let { MainActivity.saveCurrentUserId(context, it.toString()) }
-                                RetrofitClient.setAuthToken(token)
-                                SocketManager.getInstance().connectSocket(token)
-                            }
-                            onLoginSuccess()
-                        },
-                        onFailure = { exception ->
-                            isLoading = false
-                            errorMessage = exception.message ?: "Login failed. Please try again."
-                        }
-                    )
-                }
-            },
+            onClick = { viewModel.login(email, password) },
             modifier = Modifier
                 .fillMaxWidth()
                 .height(50.dp),
             colors = ButtonDefaults.buttonColors(containerColor = MessengerBlue),
-            enabled = !isLoading && email.isNotBlank() && password.isNotBlank()
+            enabled = !uiState.isLoading && email.isNotBlank() && password.isNotBlank()
         ) {
-            if (isLoading) {
+            if (uiState.isLoading) {
                 CircularProgressIndicator(
                     modifier = Modifier.size(24.dp),
                     color = MaterialTheme.colorScheme.onPrimary
@@ -169,7 +158,7 @@ fun LoginScreen(
 
         TextButton(
             onClick = onNavigateToRegister,
-            enabled = !isLoading
+            enabled = !uiState.isLoading
         ) {
             Text("Don't have an account? Sign Up", color = MessengerBlue)
         }

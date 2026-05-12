@@ -6,6 +6,7 @@ import {
   markMessagesSeen,
   reactToMessage,
   updateTypingStatus,
+  deleteMessage,
 } from "../modules/message/message.controller.js";
 import {
   getConversations,
@@ -60,6 +61,7 @@ router.patch("/messages/seen", authMiddleware, markMessagesSeen);
 router.post("/messages/seen", authMiddleware, markMessagesSeen);
 router.post("/messages/react", authMiddleware, reactToMessage);
 router.post("/typing", authMiddleware, updateTypingStatus);
+router.delete("/messages/:messageId", authMiddleware, deleteMessage);
 
 export default router;
 

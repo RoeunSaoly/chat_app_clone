@@ -23,6 +23,7 @@ import com.example.chat_app_clone.ui.theme.OnlineGreen
 fun ConversationItem(
     conversation: Conversation,
     currentUserId: Long,
+    isTyping: Boolean = false,
     onClick: () -> Unit
 ) {
     val title = conversation.displayName(currentUserId)
@@ -32,31 +33,15 @@ fun ConversationItem(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 10.dp),
+            .padding(horizontal = 16.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         // Avatar with online indicator
-        Box(modifier = Modifier.size(56.dp)) {
-            UserAvatar(name = title, size = 56)
-
-            if (conversation.isOtherUserOnline(currentUserId)) {
-                Box(
-                    modifier = Modifier
-                        .size(16.dp)
-                        .align(Alignment.BottomEnd)
-                        .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.surface)
-                        .padding(2.dp)
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .clip(CircleShape)
-                            .background(OnlineGreen)
-                    )
-                }
-            }
-        }
+        UserAvatar(
+            name = title,
+            size = 60,
+            isOnline = conversation.isOtherUserOnline(currentUserId)
+        )
 
         Spacer(modifier = Modifier.width(12.dp))
 
@@ -64,56 +49,61 @@ fun ConversationItem(
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = title,
-                fontWeight = if (hasUnread) FontWeight.Bold else FontWeight.SemiBold,
-                fontSize = 16.sp,
+                fontWeight = if (hasUnread) FontWeight.Bold else FontWeight.Medium,
+                fontSize = 17.sp,
                 color = MaterialTheme.colorScheme.onSurface,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
-            Spacer(modifier = Modifier.height(2.dp))
-            Text(
-                text = conversation.lastMessage ?: "No messages yet",
-                fontSize = 14.sp,
-                fontWeight = if (hasUnread) FontWeight.SemiBold else FontWeight.Normal,
-                color = if (hasUnread) MaterialTheme.colorScheme.onSurface
-                else MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-        }
-
-        Spacer(modifier = Modifier.width(8.dp))
-
-        // Time and unread badge
-        Column(horizontalAlignment = Alignment.End) {
-            Text(
-                text = conversation.updatedAt?.let { formatChatTime(it) }.orEmpty(),
-                fontSize = 12.sp,
-                color = if (hasUnread) MessengerBlue else MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-            if (hasUnread) {
-                Box(
-                    modifier = Modifier
-                        .size(20.dp)
-                        .clip(CircleShape)
-                        .background(MessengerBlue),
-                    contentAlignment = Alignment.Center
-                ) {
+            
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                if (isTyping) {
                     Text(
-                        text = if (conversation.unreadCount > 9) "9+" else conversation.unreadCount.toString(),
-                        color = Color.White,
-                        fontSize = 10.sp,
-                        fontWeight = FontWeight.Bold
+                        text = "Typing...",
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = MessengerBlue,
+                        maxLines = 1
+                    )
+                } else {
+                    Text(
+                        text = conversation.lastMessage ?: "No messages yet",
+                        fontSize = 14.sp,
+                        fontWeight = if (hasUnread) FontWeight.Bold else FontWeight.Normal,
+                        color = if (hasUnread) MaterialTheme.colorScheme.onSurface
+                        else Color.Gray,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f, fill = false)
+                    )
+                    Text(
+                        text = " · ${conversation.updatedAt?.let { formatChatTime(it) }.orEmpty()}",
+                        fontSize = 13.sp,
+                        color = Color.Gray,
+                        maxLines = 1
                     )
                 }
-            } else {
-                Spacer(modifier = Modifier.size(20.dp))
             }
+        }
+
+        if (hasUnread) {
+            Spacer(modifier = Modifier.width(8.dp))
+            Box(
+                modifier = Modifier
+                    .size(12.dp)
+                    .clip(CircleShape)
+                    .background(MessengerBlue)
+            )
         }
     }
 }
 
 private fun formatChatTime(value: String): String {
-    return value.substringAfter("T", value).take(5).ifBlank { value }
+    // Basic smart formatting
+    if (value.isBlank()) return ""
+    try {
+        val timePart = value.substringAfter("T", "").take(5)
+        if (timePart.isNotBlank()) return timePart
+    } catch (e: Exception) {}
+    return value.take(5)
 }
