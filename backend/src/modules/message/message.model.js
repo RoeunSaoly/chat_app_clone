@@ -60,21 +60,52 @@ export const getSenderUsername = async (userId) => {
 };
 
 /**
- * Get paginated messages for a conversation with sender info
+ * Get paginated messages for a conversation, excluding messages the user has deleted for themselves.
  */
-export const getMessagesByConversation = async (conversationId, limit = 50, offset = 0) => {
+export const getMessagesByConversation = async (conversationId, userId, limit = 50, offset = 0) => {
   const result = await pool.query(
     `SELECT m.id, m.conversation_id, m.sender_id, m.content, m.message_type, m.status, m.created_at,
+            m.deleted_for_everyone,
             u.username as sender_username, u.avatar as sender_avatar
      FROM messages m
      JOIN users u ON u.id = m.sender_id
-     WHERE m.conversation_id = $1
-     ORDER BY m.created_at ASC
-     LIMIT $2 OFFSET $3`,
-    [conversationId, limit, offset]
+     LEFT JOIN message_deleted_for_users md ON md.message_id = m.id AND md.user_id = $2
+     WHERE m.conversation_id = $1 AND md.id IS NULL
+     ORDER BY m.created_at DESC
+     LIMIT $3 OFFSET $4`,
+    [conversationId, userId, limit, offset]
   );
 
-  return result.rows;
+  return result.rows.reverse(); // Return in chronological order
+};
+
+/**
+ * Delete a message only for the current user.
+ */
+export const deleteMessageForMe = async (messageId, userId) => {
+  const result = await pool.query(
+    `INSERT INTO message_deleted_for_users (message_id, user_id)
+     VALUES ($1, $2)
+     ON CONFLICT DO NOTHING
+     RETURNING id`,
+    [messageId, userId]
+  );
+  return result.rows[0];
+};
+
+/**
+ * Mark a message as deleted for everyone (replaces content).
+ */
+export const deleteMessageForEveryone = async (messageId) => {
+  const result = await pool.query(
+    `UPDATE messages 
+     SET content = 'This message was deleted', 
+         deleted_for_everyone = TRUE 
+     WHERE id = $1 
+     RETURNING id, deleted_for_everyone`,
+    [messageId]
+  );
+  return result.rows[0];
 };
 
 /**

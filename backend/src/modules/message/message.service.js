@@ -231,3 +231,32 @@ export const getMessages = async (conversationId, userId, limit = 50, offset = 0
   return messagesWithReads;
 };
 
+/**
+ * Delete a message for the current user only.
+ */
+export const deleteMessageForMe = async (messageId, userId) => {
+    return await messageModel.deleteMessageForMe(messageId, userId);
+};
+
+/**
+ * Delete a message for everyone in the conversation.
+ */
+export const deleteMessageForEveryone = async (messageId, userId) => {
+    const message = await messageModel.getMessageById(messageId);
+    if (!message) throw new Error("Message not found");
+    
+    if (message.sender_id !== userId) {
+        throw new Error("You can only delete your own messages for everyone");
+    }
+
+    const result = await messageModel.deleteMessageForEveryone(messageId);
+    
+    // Notify all members via socket
+    emitToConversation(message.conversation_id, "message_deleted", {
+        message_id: messageId,
+        conversation_id: message.conversation_id,
+        deleted_for_everyone: true
+    });
+
+    return result;
+};

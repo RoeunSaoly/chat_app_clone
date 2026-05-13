@@ -111,12 +111,40 @@ class ChatViewModel(
         viewModelScope.launch { repository.markMessagesSeen(id) }
     }
 
+    fun deleteMessage(messageId: Long, forEveryone: Boolean) {
+        viewModelScope.launch {
+            repository.deleteMessage(messageId, forEveryone)
+                .onSuccess {
+                    if (!forEveryone) {
+                        _uiState.value = _uiState.value.copy(
+                            messages = _uiState.value.messages.filter { it.id != messageId }
+                        )
+                    }
+                }
+                .onFailure { error ->
+                    _uiState.value = _uiState.value.copy(error = error.message)
+                }
+        }
+    }
+
     private fun collectRealtime() {
         viewModelScope.launch {
             repository.newMessages.collect { message ->
                 if (message.conversationId == conversationId && _uiState.value.messages.none { it.id == message.id }) {
                     _uiState.value = _uiState.value.copy(messages = _uiState.value.messages + message)
                     if (message.senderId != currentUserId) markSeen()
+                }
+            }
+        }
+
+        viewModelScope.launch {
+            repository.deletedMessageEvents.collect { event ->
+                if (event.conversationId == conversationId) {
+                    _uiState.value = _uiState.value.copy(
+                        messages = _uiState.value.messages.map {
+                            if (it.id == event.messageId) it.copy(deletedForEveryone = true, content = "This message was deleted") else it
+                        }
+                    )
                 }
             }
         }

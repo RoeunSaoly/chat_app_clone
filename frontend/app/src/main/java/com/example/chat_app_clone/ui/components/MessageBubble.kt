@@ -1,6 +1,7 @@
 package com.example.chat_app_clone.ui.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -16,101 +17,82 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.chat_app_clone.data.model.Message
+import com.example.chat_app_clone.ui.theme.MessengerBlue
 
+@OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
 @Composable
 fun MessageBubble(
     message: Message,
     isOwn: Boolean,
     showAvatar: Boolean = false,
-    senderName: String = ""
+    senderName: String = "",
+    onLongClick: () -> Unit = {}
 ) {
     val bubbleColor = if (isOwn) {
+        MessengerBlue
+    } else {
+        if (MaterialTheme.colorScheme.surface == Color.White) Color(0xFFE4E6EB) else Color(0xFF3E4042)
+    }
+
+    val contentColor = if (isOwn) {
         Color.White
     } else {
-        Color(0xFFFDE8ED) // Light pastel pink like the background
+        MaterialTheme.colorScheme.onSurface
     }
 
     val bubbleShape = if (isOwn) {
-        RoundedCornerShape(18.dp, 18.dp, 4.dp, 18.dp)
+        RoundedCornerShape(20.dp, 20.dp, 4.dp, 20.dp)
     } else {
-        RoundedCornerShape(18.dp, 18.dp, 18.dp, 4.dp)
+        RoundedCornerShape(20.dp, 20.dp, 20.dp, 4.dp)
     }
 
-    Column(
+    Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(
-                start = if (isOwn) 64.dp else 8.dp,
-                end = if (isOwn) 8.dp else 64.dp,
-                top = 2.dp,
-                bottom = 2.dp
+            .padding(vertical = 1.dp)
+            .combinedClickable(
+                onLongClick = onLongClick,
+                onClick = {}
             ),
-        horizontalAlignment = if (isOwn) Alignment.End else Alignment.Start
+        horizontalArrangement = if (isOwn) Arrangement.End else Arrangement.Start,
+        verticalAlignment = Alignment.Bottom
     ) {
-        if (!isOwn && showAvatar) {
-            Text(
-                text = senderName,
-                fontSize = 12.sp,
-                color = Color.Gray,
-                modifier = Modifier.padding(start = 42.dp, bottom = 2.dp)
-            )
+        if (!isOwn) {
+            if (showAvatar) {
+                UserAvatar(name = senderName, size = 28)
+                Spacer(modifier = Modifier.width(8.dp))
+            } else {
+                Spacer(modifier = Modifier.width(36.dp))
+            }
         }
 
-        Row(
-            verticalAlignment = Alignment.Bottom,
-            horizontalArrangement = if (isOwn) Arrangement.End else Arrangement.Start
+        Column(
+            horizontalAlignment = if (isOwn) Alignment.End else Alignment.Start
         ) {
-            // Avatar for received messages
-            if (!isOwn) {
-                if (showAvatar) {
-                    UserAvatar(name = senderName, size = 32)
-                } else {
-                    Spacer(modifier = Modifier.width(32.dp))
-                }
-                Spacer(modifier = Modifier.width(6.dp))
-            }
-
             Box(
                 modifier = Modifier
                     .clip(bubbleShape)
                     .background(bubbleColor)
-                    .padding(horizontal = 14.dp, vertical = 10.dp)
+                    .padding(horizontal = 12.dp, vertical = 8.dp)
+                    .widthIn(max = 260.dp)
             ) {
-                Row(
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.Bottom
-                ) {
-                    Text(
-                        text = message.content,
-                        color = Color.Black,
-                        fontSize = 15.sp,
-                        lineHeight = 20.sp,
-                        modifier = Modifier.padding(end = 8.dp)
-                    )
-
-                    // Inline Timestamp + read receipt
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.padding(top = 4.dp) // Push it down slightly relative to text
-                    ) {
-                        Text(
-                            text = formatMessageTime(message.createdAt),
-                            fontSize = 11.sp,
-                            color = Color.Gray
-                        )
-                        if (isOwn) {
-                            Spacer(modifier = Modifier.width(2.dp))
-                            Icon(
-                                imageVector = if (message.status == "seen")
-                                    Icons.Default.DoneAll else Icons.Default.Done,
-                                contentDescription = null,
-                                modifier = Modifier.size(12.dp),
-                                tint = if (message.status == "seen")
-                                    Color(0xFF4CAF50) else Color.Gray
-                            )
-                        }
-                    }
-                }
+                Text(
+                    text = if (message.deletedForEveryone) "Message deleted" else message.content,
+                    color = if (message.deletedForEveryone) contentColor.copy(alpha = 0.6f) else contentColor,
+                    fontSize = 16.sp,
+                    fontStyle = if (message.deletedForEveryone) androidx.compose.ui.text.font.FontStyle.Italic else androidx.compose.ui.text.font.FontStyle.Normal,
+                    lineHeight = 20.sp
+                )
+            }
+            
+            // Only show status icon for own messages if it's the last one (simplification)
+            if (isOwn && message.status == "seen") {
+                Icon(
+                    imageVector = Icons.Default.DoneAll,
+                    contentDescription = null,
+                    modifier = Modifier.size(10.dp).padding(top = 2.dp),
+                    tint = MessengerBlue
+                )
             }
         }
     }

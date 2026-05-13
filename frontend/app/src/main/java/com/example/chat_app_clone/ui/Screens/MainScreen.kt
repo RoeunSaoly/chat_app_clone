@@ -1,4 +1,4 @@
-package com.example.chat_app_clone.ui.Screens // Fixed case sensitivity
+package com.example.chat_app_clone.ui.screens
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.fillMaxSize

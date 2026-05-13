@@ -1,7 +1,7 @@
 import jwt from "jsonwebtoken";
-import * as messageService from "../modules/message/message.service.js";
+import * as messageService from "../services/message.service.js";
 import * as userService from "../modules/user/user.service.js";
-import * as conversationService from "../modules/conversation/conversation.service.js";
+import * as conversationService from "../services/conversation.service.js";
 
 // In-memory tracking of online users (can be replaced with Redis for scaling)
 const onlineUsers = new Map();
@@ -63,7 +63,7 @@ const chatSocket = (io) => {
     // Handle send_message event
     socket.on("send_message", async (data) => {
       try {
-        const { conversation_id, content, message_type = "text" } = data;
+        const { conversation_id, content, message_type = "text", reply_to = null } = data;
 
         if (!conversation_id || !content) {
           socket.emit("error", { message: "conversation_id and content are required" });
@@ -74,7 +74,8 @@ const chatSocket = (io) => {
           userId,
           conversation_id,
           content,
-          message_type
+          message_type,
+          reply_to
         );
 
         // The service already emits new_message to the conversation room

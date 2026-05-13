@@ -11,6 +11,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.chat_app_clone.MainActivity
 import com.example.chat_app_clone.ui.screens.*
+import com.example.chat_app_clone.ui.screens.ChatScreen
 
 @Composable
 fun NavGraph(

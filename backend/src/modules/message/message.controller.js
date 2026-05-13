@@ -150,3 +150,20 @@ export const reactToMessage = async (req, res) => {
   }
 };
 
+/**
+ * DELETE /messages/:messageId
+ * Delete a message (supports type=me or type=everyone)
+ */
+export const deleteMessage = async (req, res) => {
+    const userId = req.user.id;
+    const { messageId } = req.params;
+    const { type } = req.query; // 'me' or 'everyone'
+
+    if (type === 'everyone') {
+        await messageService.deleteMessageForEveryone(messageId, userId);
+    } else {
+        await messageService.deleteMessageForMe(messageId, userId);
+    }
+
+    res.json({ success: true, message: "Message deleted" });
+};

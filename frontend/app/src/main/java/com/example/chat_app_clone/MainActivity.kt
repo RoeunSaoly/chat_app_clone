@@ -21,18 +21,27 @@ import com.example.chat_app_clone.navigation.NavGraph
 class MainActivity : ComponentActivity() {
 
     private val socketManager = SocketManager.getInstance()
-    private val prefs by lazy { getSharedPreferences("chat_app", Context.MODE_PRIVATE) }
+    private val prefManager by lazy { com.example.chat_app_clone.data.PreferenceManager(this) }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Restore token and initialize socket
-        val token = prefs.getString("auth_token", null)
-        if (!token.isNullOrEmpty()) {
-            RetrofitClient.setAuthToken(token)
-            RetrofitClient.rebuild()
-            socketManager.connectSocket(token)
-            Log.d("SocketIO", "Restored socket connection with token")
+        // Initialize Networking with Token Refresh Support
+        RetrofitClient.init(
+            tokenProvider = { prefManager.getRefreshToken() },
+            refreshListener = { access, refresh ->
+                prefManager.saveTokens(access, refresh)
+                socketManager.disconnect()
+                socketManager.connectSocket(access)
+            }
+        )
+
+        // Restore session
+        val accessToken = prefManager.getAccessToken()
+        if (!accessToken.isNullOrEmpty()) {
+            RetrofitClient.setAuthToken(accessToken)
+            socketManager.connectSocket(accessToken)
+            Log.d("MainActivity", "Session restored")
         }
 
         enableEdgeToEdge()
@@ -52,31 +61,21 @@ class MainActivity : ComponentActivity() {
     }
 
     companion object {
-        fun saveToken(context: Context, token: String) {
-            context.getSharedPreferences("chat_app", Context.MODE_PRIVATE)
-                .edit()
-                .putString("auth_token", token)
-                .apply()
+        fun saveToken(context: Context, access: String, refresh: String) {
+            com.example.chat_app_clone.data.PreferenceManager(context).saveTokens(access, refresh)
         }
 
-        fun saveCurrentUserId(context: Context, userId: String) {
-            context.getSharedPreferences("chat_app", Context.MODE_PRIVATE)
-                .edit()
-                .putString("current_user_id", userId)
-                .apply()
+        fun saveCurrentUserId(context: Context, userId: Long, username: String) {
+            com.example.chat_app_clone.data.PreferenceManager(context).saveUser(userId, username)
         }
 
         fun getCurrentUserId(context: Context): String {
-            return context.getSharedPreferences("chat_app", Context.MODE_PRIVATE)
-                .getString("current_user_id", "") ?: ""
+            return com.example.chat_app_clone.data.PreferenceManager(context).getUserId().toString()
         }
 
-        fun clearToken(context: Context) {
-            context.getSharedPreferences("chat_app", Context.MODE_PRIVATE)
-                .edit()
-                .remove("auth_token")
-                .remove("current_user_id")
-                .apply()
+        fun logout(context: Context) {
+            com.example.chat_app_clone.data.PreferenceManager(context).clear()
+            SocketManager.getInstance().disconnect()
         }
     }
 }

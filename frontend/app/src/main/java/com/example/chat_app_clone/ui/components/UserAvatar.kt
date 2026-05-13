@@ -31,6 +31,7 @@ val avatarGradients = listOf(
 fun UserAvatar(
     name: String,
     size: Int = 48,
+    isOnline: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     val initials = name.split(" ")
@@ -41,19 +42,32 @@ fun UserAvatar(
     val gradientIndex = (name.hashCode().absoluteValue) % avatarGradients.size
     val gradient = avatarGradients[gradientIndex]
 
-    Box(
-        modifier = modifier
-            .size(size.dp)
-            .clip(CircleShape)
-            .background(Brush.linearGradient(gradient)),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(
-            text = initials,
-            color = Color.White,
-            fontWeight = FontWeight.Bold,
-            fontSize = (size * 0.35).sp
-        )
+    Box(modifier = modifier.size(size.dp)) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .clip(CircleShape)
+                .background(Brush.linearGradient(gradient)),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = initials,
+                color = Color.White,
+                fontWeight = FontWeight.Bold,
+                fontSize = (size * 0.35).sp
+            )
+        }
+
+        if (isOnline) {
+            Box(
+                modifier = Modifier
+                    .size((size * 0.3).dp)
+                    .align(Alignment.BottomEnd)
+                    .background(Color.White, CircleShape)
+                    .padding(2.dp)
+                    .background(Color(0xFF4CAF50), CircleShape)
+            )
+        }
     }
 }
 

@@ -1,16 +1,9 @@
 package com.example.chat_app_clone.network
 
-import com.example.chat_app_clone.network.model.ConversationResponse
-import com.example.chat_app_clone.network.model.MessageResponse
-import com.example.chat_app_clone.network.model.SendMessageRequest
+import com.example.chat_app_clone.network.model.*
 import com.google.gson.annotations.SerializedName
 import retrofit2.Response
-import retrofit2.http.Body
-import retrofit2.http.GET
-import retrofit2.http.PATCH
-import retrofit2.http.POST
-import retrofit2.http.Path
-import retrofit2.http.Query
+import retrofit2.http.*
 
 interface ChatApi {
     @GET("api/conversations")
@@ -44,9 +37,21 @@ interface ChatApi {
     @POST("api/typing")
     suspend fun updateTyping(@Body request: TypingRequest): Response<TypingApiResponse>
 
-    @POST("api/messages/react")
+    @POST("api/chat/messages/react")
     suspend fun reactToMessage(@Body request: ReactMessageRequest): Response<GenericApiResponse>
+
+    @DELETE("api/chat/messages/{messageId}")
+    suspend fun deleteMessage(
+        @Path("messageId") messageId: String,
+        @Query("type") type: String
+    ): Response<GenericApiResponse>
 }
+
+data class MessageDeletedEvent(
+    @SerializedName("message_id") val messageId: Long,
+    @SerializedName("conversation_id") val conversationId: Long,
+    @SerializedName("deleted_for_everyone") val deletedForEveryone: Boolean
+)
 
 data class ConversationsApiResponse(
     @SerializedName("success") val success: Boolean,
@@ -123,10 +128,4 @@ data class TypingApiResponse(
 data class GenericApiResponse(
     @SerializedName("success") val success: Boolean,
     @SerializedName("error") val error: String? = null
-)
-
-data class Pagination(
-    @SerializedName("limit") val limit: Int,
-    @SerializedName("offset") val offset: Int,
-    @SerializedName("count") val count: Int
 )

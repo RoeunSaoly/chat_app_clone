@@ -11,6 +11,7 @@ import kotlinx.coroutines.launch
 
 data class HomeUiState(
     val conversations: List<Conversation> = emptyList(),
+    val typingStatuses: Map<Long, List<String>> = emptyMap(),
     val isLoading: Boolean = false,
     val error: String? = null
 )
@@ -25,6 +26,7 @@ class HomeViewModel(
     init {
         loadConversations()
         collectRealtimeMessages()
+        collectTypingEvents()
     }
 
     fun loadConversations() {
@@ -43,19 +45,43 @@ class HomeViewModel(
     private fun collectRealtimeMessages() {
         viewModelScope.launch {
             repository.newMessages.collect { message ->
-                val updated = _uiState.value.conversations.map { conversation ->
-                    if (conversation.id == message.conversationId) {
-                        conversation.copy(
-                            lastMessage = message.content,
-                            updatedAt = message.createdAt,
-                            unreadCount = conversation.unreadCount + 1
-                        )
-                    } else {
-                        conversation
+                val conversations = _uiState.value.conversations
+                val existing = conversations.find { it.id == message.conversationId }
+                
+                val updated = if (existing != null) {
+                    conversations.map { conversation ->
+                        if (conversation.id == message.conversationId) {
+                            conversation.copy(
+                                lastMessage = message.content,
+                                updatedAt = message.createdAt,
+                                unreadCount = conversation.unreadCount + 1
+                            )
+                        } else conversation
                     }
-                }.sortedByDescending { it.updatedAt.orEmpty() }
+                } else {
+                    // If it's a new conversation, we should ideally fetch the full object, 
+                    // but for now we trigger a refresh to be safe and accurate.
+                    loadConversations()
+                    return@collect
+                }
 
-                _uiState.value = _uiState.value.copy(conversations = updated)
+                _uiState.value = _uiState.value.copy(
+                    conversations = updated.sortedByDescending { it.updatedAt.orEmpty() }
+                )
+            }
+        }
+    }
+
+    private fun collectTypingEvents() {
+        viewModelScope.launch {
+            repository.typingEvents.collect { (id, names) ->
+                val current = _uiState.value.typingStatuses.toMutableMap()
+                if (names.isEmpty()) {
+                    current.remove(id)
+                } else {
+                    current[id] = names
+                }
+                _uiState.value = _uiState.value.copy(typingStatuses = current)
             }
         }
     }
