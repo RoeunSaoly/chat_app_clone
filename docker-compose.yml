@@ -12,6 +12,7 @@ services:
       DB_PASSWORD: postgres124
       DB_NAME: chat_app_db
       REDIS_HOST: redis
+      REDIS_PASSWORD: redis_password_123
       JWT_SECRET: change_me_in_production
       PORT: 3000
     depends_on:

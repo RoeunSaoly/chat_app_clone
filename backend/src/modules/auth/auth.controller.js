@@ -2,6 +2,7 @@ import { z } from "zod";
 import bcrypt from "bcryptjs";
 import * as authService from "./auth.service.js";
 import { createUser, findUserByEmail, findUserByUsername } from "./auth.model.js";
+import { asyncHandler } from "../../utils/asyncHandler.js";
 
 const registerSchema = z.object({
   username: z.string().min(3).max(30),
@@ -49,11 +50,17 @@ export const login = async (req, res, next) => {
   }
 };
 
-export const refresh = async (req, res) => {
+export const refresh = asyncHandler(async (req, res) => {
   const { refreshToken } = req.body;
-  if (!refreshToken) return res.status(400).json({ error: "Refresh token required" });
+
+  if (!refreshToken) {
+    return res.status(400).json({ success: false, error: "Refresh token required" });
+  }
 
   const result = await authService.refreshSession(refreshToken);
-  res.json({ success: true, ...result });
-};
 
+  res.json({
+    success: true,
+    ...result
+  });
+});
