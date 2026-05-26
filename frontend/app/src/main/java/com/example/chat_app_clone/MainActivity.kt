@@ -46,10 +46,17 @@ class MainActivity : ComponentActivity() {
 
         enableEdgeToEdge()
 
+        // Determine start destination based on token presence (persistent login)
+        val startDestination = if (!accessToken.isNullOrEmpty()) {
+            com.example.chat_app_clone.navigation.Screen.Home.route
+        } else {
+            com.example.chat_app_clone.navigation.Screen.Welcome.route
+        }
+
         setContent {
             Chat_app_cloneTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    NavGraph(modifier = Modifier.padding(innerPadding))
+                    NavGraph(startDestination = startDestination, modifier = Modifier.padding(innerPadding))
                 }
             }
         }

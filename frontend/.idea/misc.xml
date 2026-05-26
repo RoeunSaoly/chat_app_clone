@@ -119,6 +119,11 @@
             <id>YAML</id>
           </State>
         </expanded-state>
+        <selected-state>
+          <State>
+            <id>User defined</id>
+          </State>
+        </selected-state>
       </profile-state>
     </entry>
   </component>

@@ -31,13 +31,13 @@ class ChatRepository {
                 id = response.id,
                 conversationId = response.conversationId,
                 senderId = response.senderId,
-                content = response.content,
-                messageType = response.messageType,
-                status = response.status,
-                createdAt = response.createdAt,
-                senderUsername = response.senderUsername,
+                content = response.content ?: "",
+                messageType = response.messageType ?: "text",
+                status = response.status ?: "sent",
+                createdAt = response.createdAt ?: "",
+                senderUsername = response.senderUsername ?: "",
                 senderAvatar = response.senderAvatar,
-                deletedForEveryone = response.deletedForEveryone ?: false
+                deletedForEveryone = response.deletedForEveryone
             )
             _newMessages.tryEmit(message)
         }
@@ -64,14 +64,24 @@ class ChatRepository {
     }
 
     suspend fun fetchConversations(): Result<List<Conversation>> = runCatching {
-        com.example.chat_app_clone.data.SampleData.conversations
+        val response = chatApi.getConversations()
+        val body = response.body()
+        if (!response.isSuccessful || body?.success != true) {
+            throw Exception(body?.error ?: "Failed to fetch conversations")
+        }
+        body.data ?: emptyList()
     }
 
     suspend fun fetchMessages(conversationId: Long): Result<List<Message>> = runCatching {
-        com.example.chat_app_clone.data.SampleData.getMessagesForConversation(conversationId.toString())
+        val response = chatApi.getMessages(conversationId.toString())
+        val body = response.body()
+        if (!response.isSuccessful || body?.success != true) {
+            throw Exception(body?.error ?: "Failed to fetch messages")
+        }
+        body.data ?: emptyList()
     }
 
-    suspend fun startPrivateChat(userId: Long): Result<Conversation> = runCatching {
+    suspend fun startOrGetPrivateConversation(userId: Long): Result<Conversation> = runCatching {
         val response = chatApi.createPrivateConversation(CreatePrivateConversationRequest(userId))
         val body = response.body()
         if (!response.isSuccessful || body?.success != true || body.data == null) {
@@ -121,5 +131,9 @@ class ChatRepository {
 
     fun leaveConversation(conversationId: Long) {
         socketManager.leaveConversation(conversationId.toString())
+    }
+
+    suspend  fun startPrivateChat(userId: Long): Result<Conversation> {
+        return startOrGetPrivateConversation(userId)
     }
 }

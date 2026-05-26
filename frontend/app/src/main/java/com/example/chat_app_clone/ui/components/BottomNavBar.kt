@@ -33,9 +33,7 @@ fun MessengerBottomNavBar(
 ) {
     val items = listOf(
         BottomNavItem("Chats", Icons.Filled.ChatBubble, Icons.Outlined.ChatBubbleOutline, badgeCount = 0),
-        BottomNavItem("Calls", Icons.Filled.Call, Icons.Outlined.Call),
-        BottomNavItem("People", Icons.Filled.People, Icons.Outlined.PeopleOutline),
-        BottomNavItem("Stories", Icons.Filled.AutoAwesomeMotion, Icons.Outlined.AutoAwesomeMotion),
+        BottomNavItem("People", Icons.Filled.People, Icons.Outlined.PeopleOutline, badgeCount = 0),
     )
 
     NavigationBar(

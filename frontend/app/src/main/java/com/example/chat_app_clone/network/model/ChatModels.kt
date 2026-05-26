@@ -59,3 +59,80 @@ data class Pagination(
     @SerializedName("count") val count: Int
 )
 
+// API Response Models
+data class ConversationsApiResponse(
+    @SerializedName("success") val success: Boolean,
+    @SerializedName("data") val data: List<Conversation>? = null,
+    @SerializedName("error") val error: String? = null
+)
+
+data class ConversationApiResponse(
+    @SerializedName("success") val success: Boolean,
+    @SerializedName("data") val data: Conversation? = null,
+    @SerializedName("error") val error: String? = null
+)
+
+data class MessagesApiResponse(
+    @SerializedName("success") val success: Boolean,
+    @SerializedName("data") val data: List<Message>? = null,
+    @SerializedName("pagination") val pagination: Pagination? = null,
+    @SerializedName("error") val error: String? = null
+)
+
+data class SendMessageResponse(
+    @SerializedName("success") val success: Boolean,
+    @SerializedName("data") val data: Message? = null,
+    @SerializedName("notifiedUsers") val notifiedUsers: List<Long>? = null,
+    @SerializedName("error") val error: String? = null
+)
+
+data class MarkSeenRequest(
+    @SerializedName("conversationId") val conversationId: Long
+)
+
+data class MarkSeenResponse(
+    @SerializedName("success") val success: Boolean,
+    @SerializedName("data") val data: MarkSeenData? = null,
+    @SerializedName("error") val error: String? = null
+)
+
+data class MarkSeenData(
+    @SerializedName("conversation_id") val conversationId: Long,
+    @SerializedName("marked_as_seen") val markedAsSeen: List<Long>? = null
+)
+
+data class TypingRequest(
+    @SerializedName("conversationId") val conversationId: Long,
+    @SerializedName("isTyping") val isTyping: Boolean
+)
+
+data class TypingApiResponse(
+    @SerializedName("success") val success: Boolean,
+    @SerializedName("data") val data: TypingData? = null,
+    @SerializedName("error") val error: String? = null
+)
+
+data class TypingData(
+    @SerializedName("conversation_id") val conversationId: Long,
+    @SerializedName("user_id") val userId: Long,
+    @SerializedName("is_typing") val isTyping: Boolean,
+    @SerializedName("typing_users") val typingUsers: List<TypingUser>? = null
+)
+
+data class ReactMessageRequest(
+    @SerializedName("messageId") val messageId: Long,
+    @SerializedName("reaction") val reaction: String? = null
+)
+
+data class CreateConversationRequest(
+    @SerializedName("members") val members: List<Long>
+)
+
+data class CreatePrivateConversationRequest(
+    @SerializedName("userId") val userId: Long
+)
+
+data class CreateGroupConversationRequest(
+    @SerializedName("name") val name: String,
+    @SerializedName("members") val members: List<Long>
+)

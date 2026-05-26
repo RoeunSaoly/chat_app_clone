@@ -10,6 +10,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.chat_app_clone.MainActivity
+import com.example.chat_app_clone.ui.Screens.HomeScreen
 import com.example.chat_app_clone.ui.screens.*
 import com.example.chat_app_clone.ui.screens.ChatScreen
 
@@ -17,7 +18,7 @@ import com.example.chat_app_clone.ui.screens.ChatScreen
 fun NavGraph(
     navController: NavHostController = rememberNavController(),
     startDestination: String = Screen.Welcome.route,
-    modifier: Modifier = Modifier // ✅ added modifier parameter
+    modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
     val currentUserId = MainActivity.getCurrentUserId(context)
@@ -25,7 +26,7 @@ fun NavGraph(
     NavHost(
         navController = navController,
         startDestination = startDestination,
-        modifier = modifier // ✅ forward modifier into NavHost
+        modifier = modifier
     ) {
         // Welcome screen
         composable(Screen.Welcome.route) {
@@ -74,9 +75,36 @@ fun NavGraph(
                 onSearchClick = { navController.navigate(Screen.Search.route) },
                 onCreateGroupClick = { navController.navigate(Screen.CreateGroup.route) },
                 onCallsTabClick = { navController.navigate(Screen.Calls.route) },
+                onPeopleTabClick = { navController.navigate(Screen.People.route) },
                 onLogoutClick = {
+                    MainActivity.logout(context)
                     navController.navigate(Screen.Welcome.route) {
                         popUpTo(0) { inclusive = true }
+                    }
+                }
+            )
+        }
+
+        // People Screen
+        composable(Screen.People.route) {
+            PeopleScreen(
+                onBack = { navController.popBackStack() },
+                onChatClick = { userId ->
+                    // For simplicity, navigate to chat with "0" as conversationId
+                    // and let the ChatScreen handle finding/creating the conversation
+                    navController.navigate(Screen.Chat.createRoute("0", userId.toString()))
+                },
+                onProfileClick = { userId ->
+                    navController.navigate(Screen.Profile.createRoute(userId.toString()))
+                },
+                onNavigateToTab = { index ->
+                    when(index) {
+                        0 -> navController.navigate(Screen.Home.route) {
+                            popUpTo(Screen.Home.route) { inclusive = true }
+                        }
+                        1 -> {}
+                        2 -> {} // Already here
+                        3 -> {} // Stories not implemented as separate screen yet
                     }
                 }
             )

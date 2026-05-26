@@ -6,7 +6,7 @@ import com.example.chat_app_clone.network.model.MessagesSeenEvent
 import com.example.chat_app_clone.network.model.TypingEvent
 import com.example.chat_app_clone.network.model.UserOfflineEvent
 import com.example.chat_app_clone.network.model.UserOnlineEvent
-import com.example.chat_app_clone.network.MessageDeletedEvent
+import com.example.chat_app_clone.network.model.MessageDeletedEvent
 import com.google.gson.Gson
 import io.socket.client.IO
 import io.socket.client.Socket

@@ -3,7 +3,9 @@ package com.example.chat_app_clone.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.chat_app_clone.data.model.Conversation
+import com.example.chat_app_clone.data.model.User
 import com.example.chat_app_clone.data.repository.ChatRepository
+import com.example.chat_app_clone.data.repository.UserRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -11,13 +13,15 @@ import kotlinx.coroutines.launch
 
 data class HomeUiState(
     val conversations: List<Conversation> = emptyList(),
+    val friends: List<User> = emptyList(),
     val typingStatuses: Map<Long, List<String>> = emptyMap(),
     val isLoading: Boolean = false,
     val error: String? = null
 )
 
 class HomeViewModel(
-    private val repository: ChatRepository = ChatRepository()
+    private val chatRepository: ChatRepository = ChatRepository(),
+    private val userRepository: UserRepository = UserRepository()
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(HomeUiState())
@@ -25,16 +29,21 @@ class HomeViewModel(
 
     init {
         loadConversations()
+        loadFriends()
         collectRealtimeMessages()
+        collectDeletedMessages()
         collectTypingEvents()
     }
 
     fun loadConversations() {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true, error = null)
-            repository.fetchConversations()
+            chatRepository.fetchConversations()
                 .onSuccess { conversations ->
-                    _uiState.value = HomeUiState(conversations = conversations)
+                    _uiState.value = HomeUiState(
+                        conversations = conversations,
+                        friends = _uiState.value.friends
+                    )
                 }
                 .onFailure { error ->
                     _uiState.value = _uiState.value.copy(isLoading = false, error = error.message)
@@ -42,9 +51,22 @@ class HomeViewModel(
         }
     }
 
+    fun loadFriends() {
+        viewModelScope.launch {
+            userRepository.getFriends()
+                .onSuccess { friends ->
+                    _uiState.value = _uiState.value.copy(friends = friends)
+                }
+                .onFailure { error ->
+                    // Don't show error for friends loading, just log it
+                    _uiState.value = _uiState.value.copy(friends = emptyList())
+                }
+        }
+    }
+
     private fun collectRealtimeMessages() {
         viewModelScope.launch {
-            repository.newMessages.collect { message ->
+            chatRepository.newMessages.collect { message ->
                 val conversations = _uiState.value.conversations
                 val existing = conversations.find { it.id == message.conversationId }
                 
@@ -72,9 +94,24 @@ class HomeViewModel(
         }
     }
 
+    private fun collectDeletedMessages() {
+        viewModelScope.launch {
+            chatRepository.deletedMessageEvents.collect { event ->
+                if (event.deletedForEveryone) {
+                    val updated = _uiState.value.conversations.map { conversation ->
+                        if (conversation.id == event.conversationId) {
+                            conversation.copy(lastMessage = "Message deleted")
+                        } else conversation
+                    }
+                    _uiState.value = _uiState.value.copy(conversations = updated)
+                }
+            }
+        }
+    }
+
     private fun collectTypingEvents() {
         viewModelScope.launch {
-            repository.typingEvents.collect { (id, names) ->
+            chatRepository.typingEvents.collect { (id, names) ->
                 val current = _uiState.value.typingStatuses.toMutableMap()
                 if (names.isEmpty()) {
                     current.remove(id)

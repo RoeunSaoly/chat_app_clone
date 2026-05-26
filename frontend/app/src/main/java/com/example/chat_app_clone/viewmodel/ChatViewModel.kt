@@ -3,6 +3,7 @@ package com.example.chat_app_clone.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.chat_app_clone.data.model.Message
+import com.example.chat_app_clone.data.model.Conversation
 import com.example.chat_app_clone.data.repository.ChatRepository
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -15,7 +16,8 @@ data class ChatUiState(
     val messages: List<Message> = emptyList(),
     val typingUsers: List<String> = emptyList(),
     val isLoading: Boolean = false,
-    val error: String? = null
+    val error: String? = null,
+    val conversation: Conversation? = null
 )
 
 class ChatViewModel(
@@ -33,12 +35,38 @@ class ChatViewModel(
         collectRealtime()
     }
 
-    fun openConversation(id: Long) {
+    fun openConversation(id: Long, userId: Long? = null) {
         conversationId?.let(repository::leaveConversation)
-        conversationId = id
-        repository.joinConversation(id)
-        loadMessages()
-        markSeen()
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isLoading = true, error = null)
+            try {
+                // If conversationId is 0, start a new private conversation
+                val actualConversationId: Long
+                val conversation: Conversation?
+                
+                if (id == 0L && userId != null) {
+                    val result = repository.startOrGetPrivateConversation(userId)
+                    if (result.isFailure) {
+                        _uiState.value = _uiState.value.copy(error = result.exceptionOrNull()?.message)
+                        return@launch
+                    }
+                    conversation = result.getOrNull()
+                    actualConversationId = conversation?.id ?: return@launch
+                } else {
+                    actualConversationId = id
+                    conversation = null
+                }
+                
+                conversationId = actualConversationId
+                repository.joinConversation(actualConversationId)
+                _uiState.value = _uiState.value.copy(conversation = conversation)
+                loadMessages()
+                markSeen()
+                _uiState.value = _uiState.value.copy(isLoading = false)
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(isLoading = false, error = e.message)
+            }
+        }
     }
 
     fun loadMessages() {

@@ -49,13 +49,19 @@ fun ChatScreen(
     val isLoading = uiState.isLoading
     val error = uiState.error
     val typingUsers = uiState.typingUsers
+    val conversation = uiState.conversation
+    val displayName = conversation?.displayName(currentUserId) ?: "Chat"
+    val displayAvatar = conversation?.displayAvatar(currentUserId)
+    val isOtherUserOnline = conversation?.isOtherUserOnline(currentUserId) ?: false
 
     var inputText by remember { mutableStateOf("") }
     val listState = rememberLazyListState()
 
     // Set conversation when screen opens
     LaunchedEffect(conversationId) {
-        conversationId.toLongOrNull()?.let { viewModel.openConversation(it) }
+        val convId = conversationId.toLongOrNull() ?: return@LaunchedEffect
+        val userIdParam = userId.toLongOrNull()
+        viewModel.openConversation(convId, userIdParam)
     }
 
     // Scroll to bottom when messages change
@@ -72,17 +78,21 @@ fun ChatScreen(
                 TopAppBar(
                     title = {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            UserAvatar(name = "User", size = 36) // Simplified, usually you'd get the real name
+                            UserAvatar(name = displayName, size = 36)
                             Spacer(modifier = Modifier.width(12.dp))
                             Column {
                                 Text(
-                                    text = "Chat", // Ideally conversation name
+                                    text = displayName,
                                     fontWeight = FontWeight.Bold,
                                     fontSize = 17.sp,
                                     color = MaterialTheme.colorScheme.onSurface
                                 )
                                 Text(
-                                    text = if (typingUsers.isNotEmpty()) "is typing..." else "Active now",
+                                    text = when {
+                                        typingUsers.isNotEmpty() -> "is typing..."
+                                        isOtherUserOnline -> "Active now"
+                                        else -> "Active"
+                                    },
                                     fontSize = 12.sp,
                                     color = if (typingUsers.isNotEmpty()) OnlineGreen else Color.Gray
                                 )
@@ -184,8 +194,8 @@ fun ChatScreen(
                             message = message,
                             isOwn = isOwn,
                             showAvatar = !isOwn,
-                            senderName = if (isOwn) "You" else "User",
-                            onLongClick = { showDeleteDialog = true }
+                            senderName = message.senderUsername ?: "Unknown",
+                            onLongClick = { if (isOwn) showDeleteDialog = true }
                         )
                     }
 
