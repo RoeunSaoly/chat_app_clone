@@ -21,7 +21,7 @@ data class ChatUiState(
 )
 
 class ChatViewModel(
-    private val repository: ChatRepository = ChatRepository(),
+    private val repository: ChatRepository = ChatRepository.getInstance(),
     private val currentUserId: Long
 ) : ViewModel() {
 

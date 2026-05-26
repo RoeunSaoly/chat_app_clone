@@ -20,7 +20,7 @@ data class HomeUiState(
 )
 
 class HomeViewModel(
-    private val chatRepository: ChatRepository = ChatRepository(),
+    private val chatRepository: ChatRepository = ChatRepository.getInstance(),
     private val userRepository: UserRepository = UserRepository()
 ) : ViewModel() {
 

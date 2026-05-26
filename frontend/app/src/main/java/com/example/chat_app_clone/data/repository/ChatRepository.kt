@@ -8,7 +8,18 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 
-class ChatRepository {
+class ChatRepository private constructor() {
+
+    companion object {
+        @Volatile
+        private var instance: ChatRepository? = null
+
+        fun getInstance(): ChatRepository {
+            return instance ?: synchronized(this) {
+                instance ?: ChatRepository().also { instance = it }
+            }
+        }
+    }
 
     private val chatApi = RetrofitClient.chatApi
     private val socketManager = SocketManager.getInstance()
