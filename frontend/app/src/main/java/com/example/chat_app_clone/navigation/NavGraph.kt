@@ -12,7 +12,6 @@ import androidx.navigation.navArgument
 import com.example.chat_app_clone.MainActivity
 import com.example.chat_app_clone.ui.Screens.HomeScreen
 import com.example.chat_app_clone.ui.screens.*
-import com.example.chat_app_clone.ui.screens.ChatScreen
 
 @Composable
 fun NavGraph(
@@ -21,7 +20,6 @@ fun NavGraph(
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
-    val currentUserId = MainActivity.getCurrentUserId(context)
 
     NavHost(
         navController = navController,
@@ -62,6 +60,7 @@ fun NavGraph(
 
         // Home (chat list)
         composable(Screen.Home.route) {
+            val currentUserId = MainActivity.getCurrentUserId(context)
             HomeScreen(
                 onConversationClick = { conversation ->
                     val mine = currentUserId.toLongOrNull() ?: 0L
@@ -120,6 +119,8 @@ fun NavGraph(
         ) { backStackEntry ->
             val conversationId = backStackEntry.arguments?.getString("conversationId") ?: ""
             val userId = backStackEntry.arguments?.getString("userId") ?: ""
+            val currentUserId = MainActivity.getCurrentUserId(context)
+            
             ChatScreen(
                 conversationId = conversationId,
                 userId = userId,
@@ -144,6 +145,7 @@ fun NavGraph(
 
         // Search screen
         composable(Screen.Search.route) {
+            val currentUserId = MainActivity.getCurrentUserId(context)
             SearchScreen(
                 onBack = { navController.popBackStack() },
                 onConversationCreated = { conversation ->

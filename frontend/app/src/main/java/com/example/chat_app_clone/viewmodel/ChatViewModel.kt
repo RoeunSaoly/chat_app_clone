@@ -90,24 +90,8 @@ class ChatViewModel(
         val id = conversationId ?: return
         if (content.isBlank()) return
 
-        val tempMessage = Message(
-            id = System.currentTimeMillis() * -1,
-            conversationId = id,
-            senderId = currentUserId,
-            content = content.trim(),
-            messageType = "text",
-            status = "sent",
-            createdAt = "Sending..."
-        )
-        _uiState.value = _uiState.value.copy(messages = _uiState.value.messages + tempMessage)
-
         viewModelScope.launch {
             repository.sendMessage(id, content)
-                .onSuccess { sent ->
-                    _uiState.value = _uiState.value.copy(
-                        messages = _uiState.value.messages.map { if (it.id == tempMessage.id) sent else it }
-                    )
-                }
                 .onFailure { error ->
                     _uiState.value = _uiState.value.copy(error = error.message)
                 }

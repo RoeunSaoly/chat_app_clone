@@ -119,7 +119,7 @@ fun HomeScreen(
                             tint = MaterialTheme.colorScheme.onSurface
                         )
                     }
-                    
+
                     DropdownMenu(
                         expanded = showMenu,
                         onDismissRequest = { showMenu = false }
@@ -132,8 +132,8 @@ fun HomeScreen(
                             },
                             leadingIcon = {
                                 Icon(
-                                    Icons.AutoMirrored.Filled.Logout, 
-                                    contentDescription = "Logout", 
+                                    Icons.AutoMirrored.Filled.Logout,
+                                    contentDescription = "Logout",
                                     tint = MaterialTheme.colorScheme.error
                                 )
                             }

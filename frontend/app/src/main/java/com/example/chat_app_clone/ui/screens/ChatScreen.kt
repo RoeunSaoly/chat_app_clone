@@ -9,6 +9,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -104,21 +105,6 @@ fun ChatScreen(
                             Icon(
                                 Icons.Default.ArrowBack,
                                 contentDescription = "Back",
-                                tint = MessengerBlue
-                            )
-                        }
-                    },
-                    actions = {
-                        IconButton(onClick = {}) {
-                            Icon(Icons.Default.Call, contentDescription = "Call", tint = MessengerBlue)
-                        }
-                        IconButton(onClick = {}) {
-                            Icon(Icons.Default.VideoCall, contentDescription = "Video", tint = MessengerBlue)
-                        }
-                        IconButton(onClick = onProfileClick) {
-                            Icon(
-                                Icons.Default.Info,
-                                contentDescription = "Info",
                                 tint = MessengerBlue
                             )
                         }
@@ -256,18 +242,6 @@ private fun ChatInputBar(
             .padding(horizontal = 8.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        IconButton(onClick = {}) {
-            Icon(Icons.Default.AddCircle, contentDescription = "More", tint = MessengerBlue)
-        }
-        IconButton(onClick = {}) {
-            Icon(Icons.Default.CameraAlt, contentDescription = "Camera", tint = MessengerBlue)
-        }
-        IconButton(onClick = {}) {
-            Icon(Icons.Default.Image, contentDescription = "Gallery", tint = MessengerBlue)
-        }
-        IconButton(onClick = {}) {
-            Icon(Icons.Default.Mic, contentDescription = "Mic", tint = MessengerBlue)
-        }
 
         Box(
             modifier = Modifier
@@ -295,7 +269,7 @@ private fun ChatInputBar(
             onClick = { if (text.isNotEmpty()) onSend() }
         ) {
             Icon(
-                imageVector = if (text.isNotEmpty()) Icons.Default.Send else Icons.Default.ThumbUp,
+                imageVector = Icons.AutoMirrored.Filled.Send,
                 contentDescription = "Send",
                 tint = MessengerBlue,
                 modifier = Modifier.size(24.dp)
