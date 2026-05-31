@@ -15,4 +15,5 @@ sealed class Screen(val route: String) {
     object CreateGroup : Screen("create_group")
     object Calls : Screen("calls")
     object People : Screen("people")
+    object Setting : Screen("Setting")
 }

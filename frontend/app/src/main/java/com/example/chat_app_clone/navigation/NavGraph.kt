@@ -10,7 +10,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.chat_app_clone.MainActivity
-import com.example.chat_app_clone.ui.Screens.HomeScreen
+import com.example.chat_app_clone.ui.Screens.HomeSscreen
+import com.example.chat_app_clone.ui.Screens.SettingaScreen
 import com.example.chat_app_clone.ui.screens.*
 
 @Composable
@@ -61,7 +62,7 @@ fun NavGraph(
         // Home (chat list)
         composable(Screen.Home.route) {
             val currentUserId = MainActivity.getCurrentUserId(context)
-            HomeScreen(
+            HomeSscreen(
                 onConversationClick = { conversation ->
                     val mine = currentUserId.toLongOrNull() ?: 0L
                     val otherId = conversation.otherUser?.userId
@@ -75,12 +76,7 @@ fun NavGraph(
                 onCreateGroupClick = { navController.navigate(Screen.CreateGroup.route) },
                 onCallsTabClick = { navController.navigate(Screen.Calls.route) },
                 onPeopleTabClick = { navController.navigate(Screen.People.route) },
-                onLogoutClick = {
-                    MainActivity.logout(context)
-                    navController.navigate(Screen.Welcome.route) {
-                        popUpTo(0) { inclusive = true }
-                    }
-                }
+                onSettingTabClick = { navController.navigate(Screen.Setting.route) },
             )
         }
 
@@ -96,14 +92,22 @@ fun NavGraph(
                 onProfileClick = { userId ->
                     navController.navigate(Screen.Profile.createRoute(userId.toString()))
                 },
-                onNavigateToTab = { index ->
-                    when(index) {
-                        0 -> navController.navigate(Screen.Home.route) {
-                            popUpTo(Screen.Home.route) { inclusive = true }
-                        }
-                        1 -> {}
-                        2 -> {} // Already here
-                        3 -> {} // Stories not implemented as separate screen yet
+                onHomeTabClick = {navController.navigate(Screen.Home.route)},
+                onSettingTabClick = { navController.navigate(Screen.Setting.route) },
+                onSearchClick = { navController.navigate(Screen.Search.route) },
+                )
+        }
+
+        // Setting Screen
+        composable(Screen.Setting.route) {
+            SettingaScreen(
+                onBack = { navController.popBackStack() },
+                onHomeTabClick = {navController.navigate(Screen.Home.route)},
+                onPeopleTabClick = { navController.navigate(Screen.People.route) },
+                onLogoutClick = {
+                    MainActivity.logout(context)
+                    navController.navigate(Screen.Welcome.route) {
+                        popUpTo(0) { inclusive = true }
                     }
                 }
             )

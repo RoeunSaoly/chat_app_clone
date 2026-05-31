@@ -8,7 +8,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -33,13 +32,13 @@ import com.example.chat_app_clone.viewmodel.HomeViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreen(
+fun HomeSscreen(
     onConversationClick: (Conversation) -> Unit = {},
     onSearchClick: () -> Unit = {},
     onCreateGroupClick: () -> Unit = {},
     onCallsTabClick: () -> Unit = {},
-    onPeopleTabClick: () -> Unit = {},
-    onLogoutClick: () -> Unit = {}
+    onSettingTabClick: () -> Unit = {},
+    onPeopleTabClick: () -> Unit = {}
 ) {
     val viewModel: HomeViewModel = viewModel()
     val uiState by viewModel.uiState.collectAsState()
@@ -51,33 +50,6 @@ fun HomeScreen(
     ).toLongOrNull() ?: 0L
 
     var selectedTab by remember { mutableIntStateOf(0) }
-    var showMenu by remember { mutableStateOf(false) }
-    var showLogoutDialog by remember { mutableStateOf(false) }
-
-    // Logout confirmation dialog
-    if (showLogoutDialog) {
-        AlertDialog(
-            onDismissRequest = { showLogoutDialog = false },
-            title = { Text("Logout") },
-            text = { Text("Are you sure you want to logout?") },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        showLogoutDialog = false
-                        showMenu = false
-                        onLogoutClick()
-                    }
-                ) {
-                    Text("Logout", color = MaterialTheme.colorScheme.error)
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showLogoutDialog = false }) {
-                    Text("Cancel")
-                }
-            }
-        )
-    }
 
     // Refresh on first composition
     LaunchedEffect(Unit) {
@@ -109,34 +81,14 @@ fun HomeScreen(
                                     0xFFF0F2F5
                                 ) else Color(0xFF3E4042)
                             )
-                            .clickable { showMenu = !showMenu },
+                            .clickable { onSettingTabClick() },
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
                             Icons.Default.Menu,
-                            contentDescription = "Menu",
+                            contentDescription = "Settings",
                             modifier = Modifier.size(24.dp),
                             tint = MaterialTheme.colorScheme.onSurface
-                        )
-                    }
-
-                    DropdownMenu(
-                        expanded = showMenu,
-                        onDismissRequest = { showMenu = false }
-                    ) {
-                        DropdownMenuItem(
-                            text = { Text("Logout") },
-                            onClick = {
-                                showMenu = false
-                                showLogoutDialog = true
-                            },
-                            leadingIcon = {
-                                Icon(
-                                    Icons.AutoMirrored.Filled.Logout,
-                                    contentDescription = "Logout",
-                                    tint = MaterialTheme.colorScheme.error
-                                )
-                            }
                         )
                     }
                 },
@@ -151,26 +103,6 @@ fun HomeScreen(
                                 ) else Color(0xFF3E4042)
                             )
                             .clickable { onCreateGroupClick() },
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            Icons.Default.CameraAlt,
-                            contentDescription = "Camera",
-                            modifier = Modifier.size(22.dp),
-                            tint = MaterialTheme.colorScheme.onSurface
-                        )
-                    }
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Box(
-                        modifier = Modifier
-                            .size(40.dp)
-                            .clip(CircleShape)
-                            .background(
-                                if (MaterialTheme.colorScheme.surface == Color.White) Color(
-                                    0xFFF0F2F5
-                                ) else Color(0xFF3E4042)
-                            )
-                            .clickable { },
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
@@ -194,6 +126,7 @@ fun HomeScreen(
                     selectedTab = index
                     when (index) {
                         1 -> onPeopleTabClick()
+                        2 -> onSettingTabClick()
                     }
                 }
             )
@@ -271,57 +204,75 @@ fun HomeScreen(
 
                 // Friends row
                 if (uiState.friends.isNotEmpty()) {
-                    item {
-                        LazyRow(
-                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            items(uiState.friends) { friend ->
-                                Column(
-                                    modifier = Modifier
-                                        .width(80.dp)
-                                        .clickable {
-                                            onConversationClick(
-                                                Conversation(
-                                                    id = 0,
-                                                    type = "private",
-                                                    name = friend.username,
-                                                    members = emptyList(),
-                                                    otherUser = ConversationMember(
-                                                        userId = friend.id,
-                                                        username = friend.username,
-                                                        avatar = friend.avatar,
-                                                        isOnline = friend.isOnline,
-                                                        lastSeen = friend.lastSeen
-                                                    ),
-                                                    lastMessage = null,
-                                                    updatedAt = null,
-                                                    unreadCount = 0
-                                                )
-                                            )
-                                        },
-                                    horizontalAlignment = Alignment.CenterHorizontally,
-                                ) {
-                                    UserAvatar(
-                                        name = friend.displayName,
-                                        size = 64,
-                                        isOnline = friend.isOnline
-                                    )
-                                    Spacer(modifier = Modifier.height(6.dp))
-                                    Text(
-                                        friend.username,
-                                        fontSize = 12.sp,
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis,
-                                        textAlign = TextAlign.Center,
-                                        modifier = Modifier.fillMaxWidth()
+                    items(uiState.friends) { friend ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    onConversationClick(
+                                        Conversation(
+                                            id = 0,
+                                            type = "private",
+                                            name = friend.displayName,
+                                            members = emptyList(),
+                                            otherUser = ConversationMember(
+                                                userId = friend.id,
+                                                username = friend.username,
+                                                avatar = friend.avatar,
+                                                isOnline = friend.isOnline,
+                                                lastSeen = friend.lastSeen
+                                            ),
+                                            lastMessage = null,
+                                            updatedAt = null,
+                                            unreadCount = 0
+                                        )
                                     )
                                 }
+                                .padding(horizontal = 16.dp, vertical = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            // Avatar with online dot
+                            Box(modifier = Modifier.size(56.dp)) {
+                                UserAvatar(
+                                    name = friend.displayName,
+                                    size = 56,
+                                    isOnline = false
+                                )
+                                if (friend.isOnline) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(14.dp)
+                                            .align(Alignment.BottomEnd)
+                                            .clip(CircleShape)
+                                            .background(Color(0xFF44C553))
+                                            .border(2.dp, MaterialTheme.colorScheme.surface, CircleShape)
+                                    )
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.width(12.dp))
+
+                            // Name + "Say hi!" or last seen
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = friend.displayName,
+                                    fontWeight = FontWeight.SemiBold,
+                                    fontSize = 15.sp,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                                Spacer(modifier = Modifier.height(2.dp))
+                                Text(
+                                    text = if (friend.isOnline) "Active now" else "Say hi!",
+                                    fontSize = 13.sp,
+                                    color = Color.Gray,
+                                    maxLines = 1
+                                )
                             }
                         }
                     }
                 }
-
                 item { Spacer(modifier = Modifier.height(8.dp)) }
             }
 
@@ -348,5 +299,5 @@ fun HomeScreen(
 @Preview(showBackground = true)
 @Composable
 fun HomeScreenPreview() {
-    HomeScreen()
+    HomeSscreen()
 }
