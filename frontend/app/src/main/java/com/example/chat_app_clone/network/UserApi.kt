@@ -11,10 +11,10 @@ interface UserApi {
     suspend fun searchUsers(@Query("search") search: String? = null): Response<UsersApiResponse>
 
     @GET("api/users/profile")
-    suspend fun getProfile(): Response<UserResponse>
+    suspend fun getProfile(): Response<UserProfileResponse>
 
     @PUT("api/users/profile")
-    suspend fun updateProfile(@Body request: UpdateProfileRequest): Response<UserResponse>
+    suspend fun updateProfile(@Body request: UpdateProfileRequest): Response<UserProfileResponse>
 
     // Friend related endpoints
     @GET("api/friends/recommended")
@@ -42,6 +42,12 @@ interface UserApi {
 data class UsersApiResponse(
     @SerializedName("success") val success: Boolean,
     @SerializedName("data") val data: List<UserResponse>? = null,
+    @SerializedName("error") val error: String? = null
+)
+
+data class UserProfileResponse(
+    @SerializedName("success") val success: Boolean,
+    @SerializedName("data") val data: UserResponse,
     @SerializedName("error") val error: String? = null
 )
 

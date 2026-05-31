@@ -36,6 +36,9 @@ class ChatRepository private constructor() {
     private val _deletedMessageEvents = MutableSharedFlow<MessageDeletedEvent>(extraBufferCapacity = 16)
     val deletedMessageEvents: SharedFlow<MessageDeletedEvent> = _deletedMessageEvents.asSharedFlow()
 
+    private val _messageEditedEvents = MutableSharedFlow<MessageEditedEvent>(extraBufferCapacity = 16)
+    val messageEditedEvents: SharedFlow<MessageEditedEvent> = _messageEditedEvents.asSharedFlow()
+
     init {
         socketManager.onNewMessage { response ->
             val message = Message(
@@ -48,13 +51,19 @@ class ChatRepository private constructor() {
                 createdAt = response.createdAt ?: "",
                 senderUsername = response.senderUsername ?: "",
                 senderAvatar = response.senderAvatar,
-                deletedForEveryone = response.deletedForEveryone
+                deletedForEveryone = response.deletedForEveryone,
+                deletedForMe = response.deletedForMe,
+                isEdited = response.isEdited
             )
             _newMessages.tryEmit(message)
         }
 
         socketManager.onMessageDeleted { event ->
             _deletedMessageEvents.tryEmit(event)
+        }
+
+        socketManager.onMessageEdited { event ->
+            _messageEditedEvents.tryEmit(event)
         }
 
         socketManager.onTyping { event ->
@@ -72,6 +81,15 @@ class ChatRepository private constructor() {
         val type = if (forEveryone) "everyone" else "me"
         val response = chatApi.deleteMessage(messageId.toString(), type)
         if (!response.isSuccessful) throw Exception("Failed to delete message")
+    }
+
+    suspend fun editMessage(messageId: Long, content: String): Result<Message> = runCatching {
+        val response = chatApi.editMessage(messageId.toString(), EditMessageRequest(content))
+        val body = response.body()
+        if (!response.isSuccessful || body?.success != true || body.data == null) {
+            throw Exception(body?.error ?: "Failed to edit message")
+        }
+        body.data
     }
 
     suspend fun fetchConversations(): Result<List<Conversation>> = runCatching {

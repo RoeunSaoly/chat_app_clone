@@ -32,7 +32,7 @@ import com.example.chat_app_clone.viewmodel.HomeViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeSscreen(
+fun HomeScreen(
     onConversationClick: (Conversation) -> Unit = {},
     onSearchClick: () -> Unit = {},
     onCreateGroupClick: () -> Unit = {},
@@ -299,5 +299,5 @@ fun HomeSscreen(
 @Preview(showBackground = true)
 @Composable
 fun HomeScreenPreview() {
-    HomeSscreen()
+    HomeScreen()
 }

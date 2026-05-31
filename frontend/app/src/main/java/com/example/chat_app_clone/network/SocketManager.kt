@@ -7,6 +7,7 @@ import com.example.chat_app_clone.network.model.TypingEvent
 import com.example.chat_app_clone.network.model.UserOfflineEvent
 import com.example.chat_app_clone.network.model.UserOnlineEvent
 import com.example.chat_app_clone.network.model.MessageDeletedEvent
+import com.example.chat_app_clone.network.model.MessageEditedEvent
 import com.google.gson.Gson
 import io.socket.client.IO
 import io.socket.client.Socket
@@ -181,6 +182,22 @@ class SocketManager private constructor() {
             }
         }
         addListener("message_deleted", listener)
+    }
+
+    fun onMessageEdited(callback: (MessageEditedEvent) -> Unit) {
+        val listener: (Array<Any>) -> Unit = { args ->
+            if (args.isNotEmpty()) {
+                try {
+                    val data = args[0]
+                    val json = if (data is JSONObject) data.toString() else gson.toJson(data)
+                    val event = gson.fromJson(json, MessageEditedEvent::class.java)
+                    callback(event)
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }
+        }
+        addListener("message_edited", listener)
     }
 
     fun onTyping(callback: (TypingEvent) -> Unit) {

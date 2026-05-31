@@ -19,6 +19,10 @@ data class SendMessageRequest(
     @SerializedName("messageType") val messageType: String = "text"
 )
 
+data class EditMessageRequest(
+    @SerializedName("content") val content: String
+)
+
 data class TypingEvent(
     @SerializedName("conversation_id") val conversationId: Long,
     @SerializedName("user_id") val userId: Long,

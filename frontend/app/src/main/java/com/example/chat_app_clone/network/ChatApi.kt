@@ -45,4 +45,10 @@ interface ChatApi {
         @Path("messageId") messageId: String,
         @Query("type") type: String
     ): Response<GenericApiResponse>
+
+    @PATCH("api/messages/{messageId}")
+    suspend fun editMessage(
+        @Path("messageId") messageId: String,
+        @Body request: EditMessageRequest
+    ): Response<SendMessageResponse>
 }

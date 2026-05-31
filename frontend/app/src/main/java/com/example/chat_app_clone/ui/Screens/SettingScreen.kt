@@ -53,7 +53,7 @@ private data class SettingItem(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SettingaScreen(
+fun SettingScreen(
     onBack: () -> Unit = {},
     onPeopleTabClick: () -> Unit = {},
     onHomeTabClick: () -> Unit = {},
@@ -115,7 +115,7 @@ fun SettingaScreen(
     val accountItems = listOf(
         SettingItem(
             title = "Personal information",
-            subtitle = "Name, username, phone",
+            subtitle = user?.displayName ?: "Name, username, phone",
             icon = Icons.Default.Person,
             iconBg = Color(0xFFE6F1FB),
             iconTint = MessengerBlue,
@@ -594,5 +594,5 @@ private fun SectionLabel(title: String) {
 @Preview(showBackground = true)
 @Composable
 fun SettingsScreenPreview() {
-    SettingaScreen()
+    SettingScreen()
 }

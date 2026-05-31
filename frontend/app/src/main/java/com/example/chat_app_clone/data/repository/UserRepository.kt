@@ -19,19 +19,19 @@ class UserRepository {
     suspend fun getProfile(): Result<User> = runCatching {
         val response = userApi.getProfile()
         val body = response.body()
-        if (!response.isSuccessful || body == null) {
-            throw Exception("Failed to load profile")
+        if (!response.isSuccessful || body == null || !body.success) {
+            throw Exception(body?.error ?: "Failed to load profile")
         }
-        body
+        body.data
     }
 
     suspend fun updateProfile(username: String?, avatar: String?): Result<User> = runCatching {
         val response = userApi.updateProfile(UpdateProfileRequest(username, avatar))
         val body = response.body()
-        if (!response.isSuccessful || body == null) {
-            throw Exception("Failed to update profile")
+        if (!response.isSuccessful || body == null || !body.success) {
+            throw Exception(body?.error ?: "Failed to update profile")
         }
-        body
+        body.data
     }
 
     suspend fun getRecommendedFriends(): Result<List<User>> = runCatching {

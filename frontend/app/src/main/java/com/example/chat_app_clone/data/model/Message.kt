@@ -17,6 +17,10 @@ data class Message(
     val status: String = "sent",
     @SerializedName("deleted_for_everyone")
     val deletedForEveryone: Boolean = false,
+    @SerializedName("deleted_for_me")
+    val deletedForMe: Boolean = false,
+    @SerializedName("is_edited")
+    val isEdited: Boolean = false,
     @SerializedName("created_at")
     val createdAt: String,
     @SerializedName("sender_username")

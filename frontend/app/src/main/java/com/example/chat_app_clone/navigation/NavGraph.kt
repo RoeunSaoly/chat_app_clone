@@ -10,8 +10,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.chat_app_clone.MainActivity
-import com.example.chat_app_clone.ui.Screens.HomeSscreen
-import com.example.chat_app_clone.ui.Screens.SettingaScreen
+import com.example.chat_app_clone.ui.Screens.HomeScreen
+import com.example.chat_app_clone.ui.Screens.SettingScreen
 import com.example.chat_app_clone.ui.screens.*
 
 @Composable
@@ -62,7 +62,7 @@ fun NavGraph(
         // Home (chat list)
         composable(Screen.Home.route) {
             val currentUserId = MainActivity.getCurrentUserId(context)
-            HomeSscreen(
+            HomeScreen(
                 onConversationClick = { conversation ->
                     val mine = currentUserId.toLongOrNull() ?: 0L
                     val otherId = conversation.otherUser?.userId
@@ -100,7 +100,7 @@ fun NavGraph(
 
         // Setting Screen
         composable(Screen.Setting.route) {
-            SettingaScreen(
+            SettingScreen(
                 onBack = { navController.popBackStack() },
                 onHomeTabClick = {navController.navigate(Screen.Home.route)},
                 onPeopleTabClick = { navController.navigate(Screen.People.route) },

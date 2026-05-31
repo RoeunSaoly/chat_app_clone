@@ -127,12 +127,24 @@ class ChatViewModel(
         viewModelScope.launch {
             repository.deleteMessage(messageId, forEveryone)
                 .onSuccess {
-                    if (!forEveryone) {
-                        _uiState.value = _uiState.value.copy(
-                            messages = _uiState.value.messages.filter { it.id != messageId }
-                        )
-                    }
+                    _uiState.value = _uiState.value.copy(
+                        messages = _uiState.value.messages.map {
+                            if (it.id == messageId) {
+                                if (forEveryone) it.copy(deletedForEveryone = true, content = "This message was deleted")
+                                else it.copy(deletedForMe = true)
+                            } else it
+                        }
+                    )
                 }
+                .onFailure { error ->
+                    _uiState.value = _uiState.value.copy(error = error.message)
+                }
+        }
+    }
+
+    fun editMessage(messageId: Long, content: String) {
+        viewModelScope.launch {
+            repository.editMessage(messageId, content)
                 .onFailure { error ->
                     _uiState.value = _uiState.value.copy(error = error.message)
                 }
@@ -155,6 +167,18 @@ class ChatViewModel(
                     _uiState.value = _uiState.value.copy(
                         messages = _uiState.value.messages.map {
                             if (it.id == event.messageId) it.copy(deletedForEveryone = true, content = "This message was deleted") else it
+                        }
+                    )
+                }
+            }
+        }
+
+        viewModelScope.launch {
+            repository.messageEditedEvents.collect { event ->
+                if (event.conversationId == conversationId) {
+                    _uiState.value = _uiState.value.copy(
+                        messages = _uiState.value.messages.map {
+                            if (it.id == event.messageId) it.copy(content = event.content, isEdited = true) else it
                         }
                     )
                 }
