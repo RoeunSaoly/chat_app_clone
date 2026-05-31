@@ -6,7 +6,8 @@ import com.example.chat_app_clone.network.model.MessagesSeenEvent
 import com.example.chat_app_clone.network.model.TypingEvent
 import com.example.chat_app_clone.network.model.UserOfflineEvent
 import com.example.chat_app_clone.network.model.UserOnlineEvent
-import com.example.chat_app_clone.network.MessageDeletedEvent
+import com.example.chat_app_clone.network.model.MessageDeletedEvent
+import com.example.chat_app_clone.network.model.MessageEditedEvent
 import com.google.gson.Gson
 import io.socket.client.IO
 import io.socket.client.Socket
@@ -17,6 +18,7 @@ class SocketManager private constructor() {
 
     private var mSocket: Socket? = null
     val gson = Gson()
+    private val listeners = mutableMapOf<String, MutableList<(Array<Any>) -> Unit>>()
 
     companion object {
         @Volatile
@@ -41,6 +43,14 @@ class SocketManager private constructor() {
                 reconnectionDelayMax = 5000
             }
             mSocket = IO.socket(NetworkConfig.SOCKET_URL, options)
+            
+            // Re-register all listeners to the new socket
+            listeners.forEach { (event, eventListeners) ->
+                eventListeners.forEach { listener ->
+                    mSocket?.on(event) { args -> listener(args) }
+                }
+            }
+
             mSocket?.connect()
         } catch (e: URISyntaxException) {
             e.printStackTrace()
@@ -53,6 +63,12 @@ class SocketManager private constructor() {
     }
 
     fun isConnected(): Boolean = mSocket?.connected() == true
+
+    private fun addListener(event: String, listener: (Array<Any>) -> Unit) {
+        val eventListeners = listeners.getOrPut(event) { mutableListOf() }
+        eventListeners.add(listener)
+        mSocket?.on(event) { args -> listener(args) }
+    }
 
     // --- Emit methods ---
 
@@ -104,19 +120,19 @@ class SocketManager private constructor() {
     // --- Listener registration ---
 
     fun onConnect(callback: () -> Unit) {
-        mSocket?.on(Socket.EVENT_CONNECT) {
+        addListener(Socket.EVENT_CONNECT) {
             callback()
         }
     }
 
     fun onDisconnect(callback: () -> Unit) {
-        mSocket?.on(Socket.EVENT_DISCONNECT) {
+        addListener(Socket.EVENT_DISCONNECT) {
             callback()
         }
     }
 
     fun onConnectError(callback: (String) -> Unit) {
-        mSocket?.on(Socket.EVENT_CONNECT_ERROR) { args ->
+        addListener(Socket.EVENT_CONNECT_ERROR) { args ->
             val error = args.firstOrNull()?.toString() ?: "Connection error"
             callback(error)
         }
@@ -125,93 +141,163 @@ class SocketManager private constructor() {
     fun onNewMessage(callback: (MessageResponse) -> Unit) {
         val listener: (Array<Any>) -> Unit = { args ->
             if (args.isNotEmpty()) {
-                val json = gson.toJson(args[0])
-                val message = gson.fromJson(json, MessageResponse::class.java)
-                callback(message)
+                try {
+                    val data = args[0]
+                    val json = if (data is JSONObject) data.toString() else gson.toJson(data)
+                    val message = gson.fromJson(json, MessageResponse::class.java)
+                    callback(message)
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
             }
         }
-        mSocket?.on("receive_message", listener)
-        mSocket?.on("new_message", listener)
+        addListener("receive_message", listener)
+        addListener("new_message", listener)
     }
 
     fun onMessageDelivered(callback: (JSONObject) -> Unit) {
-        mSocket?.on("message_delivered") { args ->
-            args.firstOrNull()?.let { callback(it as JSONObject) }
+        addListener("message_delivered") { args ->
+            try {
+                val data = args.firstOrNull()
+                if (data is JSONObject) {
+                    callback(data)
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
         }
     }
 
     fun onMessageDeleted(callback: (MessageDeletedEvent) -> Unit) {
-        mSocket?.on("message_deleted") { args ->
+        val listener: (Array<Any>) -> Unit = { args ->
             if (args.isNotEmpty()) {
-                val json = gson.toJson(args[0])
-                val event = gson.fromJson(json, MessageDeletedEvent::class.java)
-                callback(event)
+                try {
+                    val data = args[0]
+                    val json = if (data is JSONObject) data.toString() else gson.toJson(data)
+                    val event = gson.fromJson(json, MessageDeletedEvent::class.java)
+                    callback(event)
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
             }
         }
+        addListener("message_deleted", listener)
+    }
+
+    fun onMessageEdited(callback: (MessageEditedEvent) -> Unit) {
+        val listener: (Array<Any>) -> Unit = { args ->
+            if (args.isNotEmpty()) {
+                try {
+                    val data = args[0]
+                    val json = if (data is JSONObject) data.toString() else gson.toJson(data)
+                    val event = gson.fromJson(json, MessageEditedEvent::class.java)
+                    callback(event)
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }
+        }
+        addListener("message_edited", listener)
     }
 
     fun onTyping(callback: (TypingEvent) -> Unit) {
-        mSocket?.on("typing") { args ->
+        val listener: (Array<Any>) -> Unit = { args ->
             if (args.isNotEmpty()) {
-                val json = gson.toJson(args[0])
-                val event = gson.fromJson(json, TypingEvent::class.java)
-                callback(event)
+                try {
+                    val data = args[0]
+                    val json = if (data is JSONObject) data.toString() else gson.toJson(data)
+                    val event = gson.fromJson(json, TypingEvent::class.java)
+                    callback(event)
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
             }
         }
+        addListener("typing", listener)
     }
 
     fun onStopTyping(callback: (TypingEvent) -> Unit) {
-        mSocket?.on("stop_typing") { args ->
+        val listener: (Array<Any>) -> Unit = { args ->
             if (args.isNotEmpty()) {
-                val json = gson.toJson(args[0])
-                val event = gson.fromJson(json, TypingEvent::class.java)
-                callback(event)
+                try {
+                    val data = args[0]
+                    val json = if (data is JSONObject) data.toString() else gson.toJson(data)
+                    val event = gson.fromJson(json, TypingEvent::class.java)
+                    callback(event)
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
             }
         }
+        addListener("stop_typing", listener)
     }
 
     fun onMessageSeen(callback: (MessageSeenEvent) -> Unit) {
-        mSocket?.on("message_seen") { args ->
+        val listener: (Array<Any>) -> Unit = { args ->
             if (args.isNotEmpty()) {
-                val json = gson.toJson(args[0])
-                val event = gson.fromJson(json, MessageSeenEvent::class.java)
-                callback(event)
+                try {
+                    val data = args[0]
+                    val json = if (data is JSONObject) data.toString() else gson.toJson(data)
+                    val event = gson.fromJson(json, MessageSeenEvent::class.java)
+                    callback(event)
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
             }
         }
+        addListener("message_seen", listener)
     }
 
     fun onMessagesSeen(callback: (MessagesSeenEvent) -> Unit) {
-        mSocket?.on("messages_seen") { args ->
+        val listener: (Array<Any>) -> Unit = { args ->
             if (args.isNotEmpty()) {
-                val json = gson.toJson(args[0])
-                val event = gson.fromJson(json, MessagesSeenEvent::class.java)
-                callback(event)
+                try {
+                    val data = args[0]
+                    val json = if (data is JSONObject) data.toString() else gson.toJson(data)
+                    val event = gson.fromJson(json, MessagesSeenEvent::class.java)
+                    callback(event)
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
             }
         }
+        addListener("messages_seen", listener)
     }
 
     fun onUserOnline(callback: (UserOnlineEvent) -> Unit) {
-        mSocket?.on("user_online") { args ->
+        val listener: (Array<Any>) -> Unit = { args ->
             if (args.isNotEmpty()) {
-                val json = gson.toJson(args[0])
-                val event = gson.fromJson(json, UserOnlineEvent::class.java)
-                callback(event)
+                try {
+                    val data = args[0]
+                    val json = if (data is JSONObject) data.toString() else gson.toJson(data)
+                    val event = gson.fromJson(json, UserOnlineEvent::class.java)
+                    callback(event)
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
             }
         }
+        addListener("user_online", listener)
     }
 
     fun onUserOffline(callback: (UserOfflineEvent) -> Unit) {
-        mSocket?.on("user_offline") { args ->
+        val listener: (Array<Any>) -> Unit = { args ->
             if (args.isNotEmpty()) {
-                val json = gson.toJson(args[0])
-                val event = gson.fromJson(json, UserOfflineEvent::class.java)
-                callback(event)
+                try {
+                    val data = args[0]
+                    val json = if (data is JSONObject) data.toString() else gson.toJson(data)
+                    val event = gson.fromJson(json, UserOfflineEvent::class.java)
+                    callback(event)
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
             }
         }
+        addListener("user_offline", listener)
     }
 
     fun onError(callback: (String) -> Unit) {
-        mSocket?.on("error") { args ->
+        addListener("error") { args ->
             val message = args.firstOrNull()?.toString() ?: "Unknown error"
             callback(message)
         }
@@ -219,5 +305,6 @@ class SocketManager private constructor() {
 
     fun removeAllListeners() {
         mSocket?.off()
+        listeners.clear()
     }
 }

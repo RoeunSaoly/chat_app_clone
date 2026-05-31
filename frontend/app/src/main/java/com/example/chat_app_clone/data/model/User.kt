@@ -6,7 +6,7 @@ data class User(
     @SerializedName(value = "id", alternate = ["user_id"])
     val id: Long,
     @SerializedName("username")
-    val username: String,
+    val username: String? = null,
     @SerializedName("email")
     val email: String? = null,
     @SerializedName("avatar")
@@ -17,5 +17,5 @@ data class User(
     val lastSeen: String? = null
 ) {
     val displayName: String
-        get() = username.ifBlank { "User $id" }
+        get() = username?.takeIf { it.isNotBlank() } ?: "User $id"
 }

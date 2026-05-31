@@ -66,7 +66,8 @@ export const getSenderUsername = async (userId) => {
 export const getMessagesByConversation = async (conversationId, userId, limit = 50, cursor = null) => {
   let query = `
     SELECT m.id, m.conversation_id, m.sender_id, m.content, m.message_type, m.status, m.created_at,
-            m.deleted_for_everyone, m.reply_to,
+            m.deleted_for_everyone, m.reply_to, m.is_edited,
+            CASE WHEN md.id IS NOT NULL THEN TRUE ELSE FALSE END as deleted_for_me,
             u.username as sender_username, u.avatar as sender_avatar,
             rm.content as reply_to_content, ru.username as reply_to_username
      FROM messages m
@@ -74,7 +75,7 @@ export const getMessagesByConversation = async (conversationId, userId, limit = 
      LEFT JOIN message_deleted_for_users md ON md.message_id = m.id AND md.user_id = $2
      LEFT JOIN messages rm ON rm.id = m.reply_to
      LEFT JOIN users ru ON ru.id = rm.sender_id
-     WHERE m.conversation_id = $1 AND md.id IS NULL
+     WHERE m.conversation_id = $1
   `;
   const params = [conversationId, userId, limit];
 
@@ -96,9 +97,9 @@ export const getMessagesByConversation = async (conversationId, userId, limit = 
 export const editMessageContent = async (messageId, content) => {
   const result = await pool.query(
     `UPDATE messages 
-     SET content = $2 
+     SET content = $2, is_edited = TRUE 
      WHERE id = $1 
-     RETURNING id, content, created_at`,
+     RETURNING id, content, created_at, is_edited`,
     [messageId, content]
   );
   return result.rows[0];

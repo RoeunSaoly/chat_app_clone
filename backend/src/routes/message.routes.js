@@ -15,6 +15,7 @@ import {
   sendMessage,
   updateTypingStatus,
   deleteMessage,
+  editMessage,
 } from "../controllers/message.controller.js";
 
 const router = express.Router();

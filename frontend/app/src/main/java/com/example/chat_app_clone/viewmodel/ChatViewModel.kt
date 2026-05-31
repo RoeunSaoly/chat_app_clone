@@ -3,6 +3,7 @@ package com.example.chat_app_clone.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.chat_app_clone.data.model.Message
+import com.example.chat_app_clone.data.model.Conversation
 import com.example.chat_app_clone.data.repository.ChatRepository
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -15,11 +16,12 @@ data class ChatUiState(
     val messages: List<Message> = emptyList(),
     val typingUsers: List<String> = emptyList(),
     val isLoading: Boolean = false,
-    val error: String? = null
+    val error: String? = null,
+    val conversation: Conversation? = null
 )
 
 class ChatViewModel(
-    private val repository: ChatRepository = ChatRepository(),
+    private val repository: ChatRepository = ChatRepository.getInstance(),
     private val currentUserId: Long
 ) : ViewModel() {
 
@@ -33,12 +35,38 @@ class ChatViewModel(
         collectRealtime()
     }
 
-    fun openConversation(id: Long) {
+    fun openConversation(id: Long, userId: Long? = null) {
         conversationId?.let(repository::leaveConversation)
-        conversationId = id
-        repository.joinConversation(id)
-        loadMessages()
-        markSeen()
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isLoading = true, error = null)
+            try {
+                // If conversationId is 0, start a new private conversation
+                val actualConversationId: Long
+                val conversation: Conversation?
+                
+                if (id == 0L && userId != null) {
+                    val result = repository.startOrGetPrivateConversation(userId)
+                    if (result.isFailure) {
+                        _uiState.value = _uiState.value.copy(error = result.exceptionOrNull()?.message)
+                        return@launch
+                    }
+                    conversation = result.getOrNull()
+                    actualConversationId = conversation?.id ?: return@launch
+                } else {
+                    actualConversationId = id
+                    conversation = null
+                }
+                
+                conversationId = actualConversationId
+                repository.joinConversation(actualConversationId)
+                _uiState.value = _uiState.value.copy(conversation = conversation)
+                loadMessages()
+                markSeen()
+                _uiState.value = _uiState.value.copy(isLoading = false)
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(isLoading = false, error = e.message)
+            }
+        }
     }
 
     fun loadMessages() {
@@ -62,24 +90,8 @@ class ChatViewModel(
         val id = conversationId ?: return
         if (content.isBlank()) return
 
-        val tempMessage = Message(
-            id = System.currentTimeMillis() * -1,
-            conversationId = id,
-            senderId = currentUserId,
-            content = content.trim(),
-            messageType = "text",
-            status = "sent",
-            createdAt = "Sending..."
-        )
-        _uiState.value = _uiState.value.copy(messages = _uiState.value.messages + tempMessage)
-
         viewModelScope.launch {
             repository.sendMessage(id, content)
-                .onSuccess { sent ->
-                    _uiState.value = _uiState.value.copy(
-                        messages = _uiState.value.messages.map { if (it.id == tempMessage.id) sent else it }
-                    )
-                }
                 .onFailure { error ->
                     _uiState.value = _uiState.value.copy(error = error.message)
                 }
@@ -115,12 +127,24 @@ class ChatViewModel(
         viewModelScope.launch {
             repository.deleteMessage(messageId, forEveryone)
                 .onSuccess {
-                    if (!forEveryone) {
-                        _uiState.value = _uiState.value.copy(
-                            messages = _uiState.value.messages.filter { it.id != messageId }
-                        )
-                    }
+                    _uiState.value = _uiState.value.copy(
+                        messages = _uiState.value.messages.map {
+                            if (it.id == messageId) {
+                                if (forEveryone) it.copy(deletedForEveryone = true, content = "This message was deleted")
+                                else it.copy(deletedForMe = true)
+                            } else it
+                        }
+                    )
                 }
+                .onFailure { error ->
+                    _uiState.value = _uiState.value.copy(error = error.message)
+                }
+        }
+    }
+
+    fun editMessage(messageId: Long, content: String) {
+        viewModelScope.launch {
+            repository.editMessage(messageId, content)
                 .onFailure { error ->
                     _uiState.value = _uiState.value.copy(error = error.message)
                 }
@@ -143,6 +167,18 @@ class ChatViewModel(
                     _uiState.value = _uiState.value.copy(
                         messages = _uiState.value.messages.map {
                             if (it.id == event.messageId) it.copy(deletedForEveryone = true, content = "This message was deleted") else it
+                        }
+                    )
+                }
+            }
+        }
+
+        viewModelScope.launch {
+            repository.messageEditedEvents.collect { event ->
+                if (event.conversationId == conversationId) {
+                    _uiState.value = _uiState.value.copy(
+                        messages = _uiState.value.messages.map {
+                            if (it.id == event.messageId) it.copy(content = event.content, isEdited = true) else it
                         }
                     )
                 }

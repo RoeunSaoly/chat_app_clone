@@ -76,13 +76,24 @@ fun MessageBubble(
                     .padding(horizontal = 12.dp, vertical = 8.dp)
                     .widthIn(max = 260.dp)
             ) {
-                Text(
-                    text = if (message.deletedForEveryone) "Message deleted" else message.content,
-                    color = if (message.deletedForEveryone) contentColor.copy(alpha = 0.6f) else contentColor,
-                    fontSize = 16.sp,
-                    fontStyle = if (message.deletedForEveryone) androidx.compose.ui.text.font.FontStyle.Italic else androidx.compose.ui.text.font.FontStyle.Normal,
-                    lineHeight = 20.sp
-                )
+                Column {
+                    val isDeleted = message.deletedForEveryone || message.deletedForMe
+                    Text(
+                        text = if (isDeleted) "Message deleted" else message.content,
+                        color = if (isDeleted) contentColor.copy(alpha = 0.6f) else contentColor,
+                        fontSize = 16.sp,
+                        fontStyle = if (isDeleted) androidx.compose.ui.text.font.FontStyle.Italic else androidx.compose.ui.text.font.FontStyle.Normal,
+                        lineHeight = 20.sp
+                    )
+                    if (message.isEdited && !isDeleted) {
+                        Text(
+                            text = "edited",
+                            color = contentColor.copy(alpha = 0.7f),
+                            fontSize = 10.sp,
+                            modifier = Modifier.align(Alignment.End)
+                        )
+                    }
+                }
             }
             
             // Only show status icon for own messages if it's the last one (simplification)

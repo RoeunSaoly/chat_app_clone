@@ -2,6 +2,7 @@ import express from "express";
 import authRoutes from "../modules/auth/auth.routes.js";
 import chatRoutes from "./chat.routes.js";
 import userRoutes from "./user.routes.js";
+import friendRoutes from "./friend.routes.js";
 import notificationRoutes from "../modules/notification/notification.routes.js";
 import conversationRoutes from "./conversation.routes.js";
 import messageRoutes from "./message.routes.js";
@@ -26,6 +27,9 @@ router.use("/auth", authRoutes);
 // profile routes (get users, get profile)
 router.use("/profile", userRoutes);
 router.use("/users", userRoutes);
+
+// friend routes
+router.use("/friends", friendRoutes);
 
 // refactored chat API routes
 router.use("/conversations", conversationRoutes);

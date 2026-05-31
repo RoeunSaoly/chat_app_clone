@@ -9,6 +9,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -24,6 +26,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.runtime.collectAsState
+import com.example.chat_app_clone.data.model.Message
 import com.example.chat_app_clone.ui.components.MessageBubble
 import com.example.chat_app_clone.ui.components.UserAvatar
 import com.example.chat_app_clone.ui.theme.MessengerBlue
@@ -49,13 +52,20 @@ fun ChatScreen(
     val isLoading = uiState.isLoading
     val error = uiState.error
     val typingUsers = uiState.typingUsers
+    val conversation = uiState.conversation
+    val displayName = conversation?.displayName(currentUserId) ?: "Chat"
+    val displayAvatar = conversation?.displayAvatar(currentUserId)
+    val isOtherUserOnline = conversation?.isOtherUserOnline(currentUserId) ?: false
 
     var inputText by remember { mutableStateOf("") }
+    var editingMessage by remember { mutableStateOf<Message?>(null) }
     val listState = rememberLazyListState()
 
     // Set conversation when screen opens
     LaunchedEffect(conversationId) {
-        conversationId.toLongOrNull()?.let { viewModel.openConversation(it) }
+        val convId = conversationId.toLongOrNull() ?: return@LaunchedEffect
+        val userIdParam = userId.toLongOrNull()
+        viewModel.openConversation(convId, userIdParam)
     }
 
     // Scroll to bottom when messages change
@@ -72,17 +82,21 @@ fun ChatScreen(
                 TopAppBar(
                     title = {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            UserAvatar(name = "User", size = 36) // Simplified, usually you'd get the real name
+                            UserAvatar(name = displayName, size = 36)
                             Spacer(modifier = Modifier.width(12.dp))
                             Column {
                                 Text(
-                                    text = "Chat", // Ideally conversation name
+                                    text = displayName,
                                     fontWeight = FontWeight.Bold,
                                     fontSize = 17.sp,
                                     color = MaterialTheme.colorScheme.onSurface
                                 )
                                 Text(
-                                    text = if (typingUsers.isNotEmpty()) "is typing..." else "Active now",
+                                    text = when {
+                                        typingUsers.isNotEmpty() -> "is typing..."
+                                        isOtherUserOnline -> "Active now"
+                                        else -> "Active"
+                                    },
                                     fontSize = 12.sp,
                                     color = if (typingUsers.isNotEmpty()) OnlineGreen else Color.Gray
                                 )
@@ -92,23 +106,8 @@ fun ChatScreen(
                     navigationIcon = {
                         IconButton(onClick = onBack) {
                             Icon(
-                                Icons.Default.ArrowBack,
+                                Icons.AutoMirrored.Filled.ArrowBack,
                                 contentDescription = "Back",
-                                tint = MessengerBlue
-                            )
-                        }
-                    },
-                    actions = {
-                        IconButton(onClick = {}) {
-                            Icon(Icons.Default.Call, contentDescription = "Call", tint = MessengerBlue)
-                        }
-                        IconButton(onClick = {}) {
-                            Icon(Icons.Default.VideoCall, contentDescription = "Video", tint = MessengerBlue)
-                        }
-                        IconButton(onClick = onProfileClick) {
-                            Icon(
-                                Icons.Default.Info,
-                                contentDescription = "Info",
                                 tint = MessengerBlue
                             )
                         }
@@ -121,16 +120,27 @@ fun ChatScreen(
             bottomBar = {
                 ChatInputBar(
                     text = inputText,
+                    isEditing = editingMessage != null,
                     onTextChange = {
                         inputText = it
                         viewModel.onTyping()
                     },
                     onSend = {
                         if (inputText.isNotEmpty()) {
-                            viewModel.sendMessage(inputText)
+                            val editing = editingMessage
+                            if (editing != null) {
+                                viewModel.editMessage(editing.id, inputText)
+                                editingMessage = null
+                            } else {
+                                viewModel.sendMessage(inputText)
+                            }
                             inputText = ""
                             viewModel.stopTyping()
                         }
+                    },
+                    onCancelEdit = {
+                        editingMessage = null
+                        inputText = ""
                     }
                 )
             }
@@ -156,6 +166,7 @@ fun ChatScreen(
                 ) {
                     items(messages) { message ->
                         val isOwn = message.senderId == currentUserId
+                        var showMenu by remember { mutableStateOf(false) }
                         var showDeleteDialog by remember { mutableStateOf(false) }
 
                         if (showDeleteDialog) {
@@ -180,13 +191,38 @@ fun ChatScreen(
                             )
                         }
 
-                        MessageBubble(
-                            message = message,
-                            isOwn = isOwn,
-                            showAvatar = !isOwn,
-                            senderName = if (isOwn) "You" else "User",
-                            onLongClick = { showDeleteDialog = true }
-                        )
+                        Box {
+                            MessageBubble(
+                                message = message,
+                                isOwn = isOwn,
+                                showAvatar = !isOwn,
+                                senderName = message.senderUsername ?: "Unknown",
+                                onLongClick = { if (isOwn && !message.deletedForEveryone && !message.deletedForMe) showMenu = true }
+                            )
+
+                            DropdownMenu(
+                                expanded = showMenu,
+                                onDismissRequest = { showMenu = false }
+                            ) {
+                                DropdownMenuItem(
+                                    text = { Text("Edit") },
+                                    onClick = {
+                                        showMenu = false
+                                        editingMessage = message
+                                        inputText = message.content
+                                    },
+                                    leadingIcon = { Icon(Icons.Default.Edit, contentDescription = null) }
+                                )
+                                DropdownMenuItem(
+                                    text = { Text("Delete", color = Color.Red) },
+                                    onClick = {
+                                        showMenu = false
+                                        showDeleteDialog = true
+                                    },
+                                    leadingIcon = { Icon(Icons.Default.Delete, contentDescription = null, tint = Color.Red) }
+                                )
+                            }
+                        }
                     }
 
                     if (typingUsers.isNotEmpty()) {
@@ -236,60 +272,86 @@ private fun TypingIndicator(typingUsers: List<String>) {
 @Composable
 private fun ChatInputBar(
     text: String,
+    isEditing: Boolean,
     onTextChange: (String) -> Unit,
-    onSend: () -> Unit
+    onSend: () -> Unit,
+    onCancelEdit: () -> Unit
 ) {
-    Row(
+    Column(
         modifier = Modifier
             .fillMaxWidth()
             .navigationBarsPadding()
-            .padding(horizontal = 8.dp, vertical = 8.dp),
-        verticalAlignment = Alignment.CenterVertically
+            .padding(horizontal = 8.dp, vertical = 8.dp)
     ) {
-        IconButton(onClick = {}) {
-            Icon(Icons.Default.AddCircle, contentDescription = "More", tint = MessengerBlue)
-        }
-        IconButton(onClick = {}) {
-            Icon(Icons.Default.CameraAlt, contentDescription = "Camera", tint = MessengerBlue)
-        }
-        IconButton(onClick = {}) {
-            Icon(Icons.Default.Image, contentDescription = "Gallery", tint = MessengerBlue)
-        }
-        IconButton(onClick = {}) {
-            Icon(Icons.Default.Mic, contentDescription = "Mic", tint = MessengerBlue)
-        }
-
-        Box(
-            modifier = Modifier
-                .weight(1f)
-                .clip(RoundedCornerShape(20.dp))
-                .background(if (MaterialTheme.colorScheme.surface == Color.White) Color(0xFFF0F2F5) else Color(0xFF3E4042))
-                .padding(horizontal = 12.dp, vertical = 8.dp),
-            contentAlignment = Alignment.CenterStart
-        ) {
-            if (text.isEmpty()) {
-                Text("Aa", color = Color.Gray, fontSize = 16.sp)
+        if (isEditing) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 12.dp, vertical = 4.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    Icons.Default.Edit,
+                    contentDescription = null,
+                    modifier = Modifier.size(14.dp),
+                    tint = MessengerBlue
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    "Editing message",
+                    fontSize = 12.sp,
+                    color = MessengerBlue,
+                    modifier = Modifier.weight(1f)
+                )
+                IconButton(
+                    onClick = onCancelEdit,
+                    modifier = Modifier.size(20.dp)
+                ) {
+                    Icon(
+                        Icons.Default.Close,
+                        contentDescription = "Cancel edit",
+                        modifier = Modifier.size(16.dp),
+                        tint = Color.Gray
+                    )
+                }
             }
-            BasicTextField(
-                value = text,
-                onValueChange = onTextChange,
-                textStyle = LocalTextStyle.current.copy(
-                    color = MaterialTheme.colorScheme.onSurface,
-                    fontSize = 16.sp
-                ),
-                modifier = Modifier.fillMaxWidth()
-            )
         }
 
-        IconButton(
-            onClick = { if (text.isNotEmpty()) onSend() }
+        Row(
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(
-                imageVector = if (text.isNotEmpty()) Icons.Default.Send else Icons.Default.ThumbUp,
-                contentDescription = "Send",
-                tint = MessengerBlue,
-                modifier = Modifier.size(24.dp)
-            )
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .clip(RoundedCornerShape(20.dp))
+                    .background(if (MaterialTheme.colorScheme.surface == Color.White) Color(0xFFF0F2F5) else Color(0xFF3E4042))
+                    .padding(horizontal = 12.dp, vertical = 8.dp),
+                contentAlignment = Alignment.CenterStart
+            ) {
+                if (text.isEmpty()) {
+                    Text("Aa", color = Color.Gray, fontSize = 16.sp)
+                }
+                BasicTextField(
+                    value = text,
+                    onValueChange = onTextChange,
+                    textStyle = LocalTextStyle.current.copy(
+                        color = MaterialTheme.colorScheme.onSurface,
+                        fontSize = 16.sp
+                    ),
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+
+            IconButton(
+                onClick = { if (text.isNotEmpty()) onSend() }
+            ) {
+                Icon(
+                    imageVector = if (isEditing) Icons.Default.Check else Icons.AutoMirrored.Filled.Send,
+                    contentDescription = if (isEditing) "Save" else "Send",
+                    tint = MessengerBlue,
+                    modifier = Modifier.size(24.dp)
+                )
+            }
         }
     }
 }

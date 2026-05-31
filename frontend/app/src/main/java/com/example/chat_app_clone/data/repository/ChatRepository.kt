@@ -8,7 +8,18 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 
-class ChatRepository {
+class ChatRepository private constructor() {
+
+    companion object {
+        @Volatile
+        private var instance: ChatRepository? = null
+
+        fun getInstance(): ChatRepository {
+            return instance ?: synchronized(this) {
+                instance ?: ChatRepository().also { instance = it }
+            }
+        }
+    }
 
     private val chatApi = RetrofitClient.chatApi
     private val socketManager = SocketManager.getInstance()
@@ -25,25 +36,34 @@ class ChatRepository {
     private val _deletedMessageEvents = MutableSharedFlow<MessageDeletedEvent>(extraBufferCapacity = 16)
     val deletedMessageEvents: SharedFlow<MessageDeletedEvent> = _deletedMessageEvents.asSharedFlow()
 
+    private val _messageEditedEvents = MutableSharedFlow<MessageEditedEvent>(extraBufferCapacity = 16)
+    val messageEditedEvents: SharedFlow<MessageEditedEvent> = _messageEditedEvents.asSharedFlow()
+
     init {
         socketManager.onNewMessage { response ->
             val message = Message(
                 id = response.id,
                 conversationId = response.conversationId,
                 senderId = response.senderId,
-                content = response.content,
-                messageType = response.messageType,
-                status = response.status,
-                createdAt = response.createdAt,
-                senderUsername = response.senderUsername,
+                content = response.content ?: "",
+                messageType = response.messageType ?: "text",
+                status = response.status ?: "sent",
+                createdAt = response.createdAt ?: "",
+                senderUsername = response.senderUsername ?: "",
                 senderAvatar = response.senderAvatar,
-                deletedForEveryone = response.deletedForEveryone ?: false
+                deletedForEveryone = response.deletedForEveryone,
+                deletedForMe = response.deletedForMe,
+                isEdited = response.isEdited
             )
             _newMessages.tryEmit(message)
         }
 
         socketManager.onMessageDeleted { event ->
             _deletedMessageEvents.tryEmit(event)
+        }
+
+        socketManager.onMessageEdited { event ->
+            _messageEditedEvents.tryEmit(event)
         }
 
         socketManager.onTyping { event ->
@@ -63,15 +83,34 @@ class ChatRepository {
         if (!response.isSuccessful) throw Exception("Failed to delete message")
     }
 
+    suspend fun editMessage(messageId: Long, content: String): Result<Message> = runCatching {
+        val response = chatApi.editMessage(messageId.toString(), EditMessageRequest(content))
+        val body = response.body()
+        if (!response.isSuccessful || body?.success != true || body.data == null) {
+            throw Exception(body?.error ?: "Failed to edit message")
+        }
+        body.data
+    }
+
     suspend fun fetchConversations(): Result<List<Conversation>> = runCatching {
-        com.example.chat_app_clone.data.SampleData.conversations
+        val response = chatApi.getConversations()
+        val body = response.body()
+        if (!response.isSuccessful || body?.success != true) {
+            throw Exception(body?.error ?: "Failed to fetch conversations")
+        }
+        body.data ?: emptyList()
     }
 
     suspend fun fetchMessages(conversationId: Long): Result<List<Message>> = runCatching {
-        com.example.chat_app_clone.data.SampleData.getMessagesForConversation(conversationId.toString())
+        val response = chatApi.getMessages(conversationId.toString())
+        val body = response.body()
+        if (!response.isSuccessful || body?.success != true) {
+            throw Exception(body?.error ?: "Failed to fetch messages")
+        }
+        body.data ?: emptyList()
     }
 
-    suspend fun startPrivateChat(userId: Long): Result<Conversation> = runCatching {
+    suspend fun startOrGetPrivateConversation(userId: Long): Result<Conversation> = runCatching {
         val response = chatApi.createPrivateConversation(CreatePrivateConversationRequest(userId))
         val body = response.body()
         if (!response.isSuccessful || body?.success != true || body.data == null) {
@@ -121,5 +160,9 @@ class ChatRepository {
 
     fun leaveConversation(conversationId: Long) {
         socketManager.leaveConversation(conversationId.toString())
+    }
+
+    suspend  fun startPrivateChat(userId: Long): Result<Conversation> {
+        return startOrGetPrivateConversation(userId)
     }
 }

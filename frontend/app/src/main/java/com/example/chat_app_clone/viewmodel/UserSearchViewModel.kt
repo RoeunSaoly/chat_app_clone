@@ -24,7 +24,7 @@ data class UserSearchUiState(
 
 class UserSearchViewModel(
     private val userRepository: UserRepository = UserRepository(),
-    private val chatRepository: ChatRepository = ChatRepository()
+    private val chatRepository: ChatRepository = ChatRepository.getInstance()
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(UserSearchUiState(isLoading = true))

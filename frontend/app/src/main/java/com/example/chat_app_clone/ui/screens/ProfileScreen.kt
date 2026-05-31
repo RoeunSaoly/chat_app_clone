@@ -35,7 +35,7 @@ fun ProfileScreen(
 
     LaunchedEffect(user?.id) {
         user?.let {
-            username = it.username
+            username = it.username.orEmpty()
             avatar = it.avatar.orEmpty()
         }
     }
