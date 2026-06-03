@@ -39,6 +39,9 @@ class ChatRepository private constructor() {
     private val _messageEditedEvents = MutableSharedFlow<MessageEditedEvent>(extraBufferCapacity = 16)
     val messageEditedEvents: SharedFlow<MessageEditedEvent> = _messageEditedEvents.asSharedFlow()
 
+    private val _newNotifications = MutableSharedFlow<NotificationResponse>(extraBufferCapacity = 16)
+    val newNotifications: SharedFlow<NotificationResponse> = _newNotifications.asSharedFlow()
+
     init {
         socketManager.onNewMessage { response ->
             val message = Message(
@@ -56,6 +59,15 @@ class ChatRepository private constructor() {
                 isEdited = response.isEdited
             )
             _newMessages.tryEmit(message)
+        }
+
+        socketManager.onNewNotification { json ->
+            try {
+                val notification = socketManager.gson.fromJson(json.toString(), NotificationResponse::class.java)
+                _newNotifications.tryEmit(notification)
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
         }
 
         socketManager.onMessageDeleted { event ->

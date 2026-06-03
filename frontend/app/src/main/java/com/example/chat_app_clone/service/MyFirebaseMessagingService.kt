@@ -34,11 +34,24 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
     override fun onMessageReceived(remoteMessage: RemoteMessage) {
         super.onMessageReceived(remoteMessage)
 
+        val data = remoteMessage.data
+        val type = data["type"]
+        val conversationId = data["conversationId"]?.toLongOrNull()
+        
+        // If it's a message and user is already in that chat, don't show notification
+        if (type == "message" && conversationId != null) {
+            val preferenceManager = PreferenceManager(applicationContext)
+            val activeConversationId = preferenceManager.getActiveConversationId()
+            if (activeConversationId == conversationId) {
+                return
+            }
+        }
+
         // Check if message contains a notification payload.
         remoteMessage.notification?.let {
             val title = it.title ?: "New Notification"
             val body = it.body ?: ""
-            sendNotification(title, body, remoteMessage.data)
+            sendNotification(title, body, data)
         }
     }
 

@@ -19,10 +19,10 @@ export const up = async (client) => {
     console.log("Could not drop constraint, it might not exist or have a different name.", e.message);
   }
 
-  // Also add friend_request type
+  // Also add friend_request and friend_accepted types
   await client.query(`
     ALTER TABLE notifications ADD CONSTRAINT notifications_type_check 
-    CHECK (type IN ('message', 'system', 'friend_request'));
+    CHECK (type IN ('message', 'system', 'friend_request', 'friend_accepted'));
   `);
 };
 

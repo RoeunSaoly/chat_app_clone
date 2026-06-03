@@ -9,7 +9,7 @@ export const createMessage = async (data) => {
   const result = await pool.query(
     `INSERT INTO messages (conversation_id, sender_id, content, message_type, status, reply_to)
      VALUES ($1, $2, $3, $4, 'sent', $5)
-     RETURNING id, conversation_id, sender_id, content, message_type, status, reply_to, created_at`,
+     RETURNING id, conversation_id, sender_id, content, message_type, status, reply_to, is_edited, created_at`,
     [conversation_id, sender_id, content, message_type, reply_to]
   );
 

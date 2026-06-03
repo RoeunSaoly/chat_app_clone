@@ -29,6 +29,7 @@ import com.example.chat_app_clone.data.model.ConversationMember
 import com.example.chat_app_clone.ui.components.*
 import com.example.chat_app_clone.ui.theme.MessengerBlue
 import com.example.chat_app_clone.viewmodel.HomeViewModel
+import com.example.chat_app_clone.viewmodel.NotificationViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -42,7 +43,9 @@ fun HomeScreen(
     onNotificationsTapsClick: () -> Unit = {}
 ) {
     val viewModel: HomeViewModel = viewModel()
+    val notificationViewModel: NotificationViewModel = viewModel()
     val uiState by viewModel.uiState.collectAsState()
+    val notificationUiState by notificationViewModel.uiState.collectAsState()
     val conversations = uiState.conversations
     val isLoading = uiState.isLoading
     val error = uiState.error
@@ -123,6 +126,7 @@ fun HomeScreen(
         bottomBar = {
             MessengerBottomNavBar(
                 selectedIndex = selectedTab,
+                notificationBadgeCount = notificationUiState.unreadCount,
                 onItemSelected = { index ->
                     selectedTab = index
                     when (index) {
