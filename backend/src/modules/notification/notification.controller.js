@@ -14,9 +14,11 @@ export const getNotifications = async (req, res) => {
 
     res.json({
       success: true,
-      data: result.notifications,
-      pagination: result.pagination,
-      unreadCount: result.unreadCount,
+      data: {
+        notifications: result.notifications,
+        pagination: result.pagination,
+        unreadCount: result.unreadCount,
+      },
     });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });

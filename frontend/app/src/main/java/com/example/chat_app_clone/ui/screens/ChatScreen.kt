@@ -26,6 +26,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.runtime.collectAsState
+import com.example.chat_app_clone.data.PreferenceManager
 import com.example.chat_app_clone.data.model.Message
 import com.example.chat_app_clone.ui.components.MessageBubble
 import com.example.chat_app_clone.ui.components.UserAvatar
@@ -33,6 +34,7 @@ import com.example.chat_app_clone.ui.theme.MessengerBlue
 import com.example.chat_app_clone.ui.theme.OnlineGreen
 import com.example.chat_app_clone.viewmodel.ChatViewModel
 import com.example.chat_app_clone.viewmodel.ChatViewModelFactory
+import androidx.compose.ui.platform.LocalContext
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -43,6 +45,9 @@ fun ChatScreen(
     onBack: () -> Unit = {},
     onProfileClick: () -> Unit = {}
 ) {
+    val context = LocalContext.current
+    val prefManager = remember { PreferenceManager(context) }
+    
     val viewModel: ChatViewModel = viewModel(
         factory = ChatViewModelFactory(currentUserId)
     )
@@ -66,6 +71,16 @@ fun ChatScreen(
         val convId = conversationId.toLongOrNull() ?: return@LaunchedEffect
         val userIdParam = userId.toLongOrNull()
         viewModel.openConversation(convId, userIdParam)
+        
+        // Mark as active conversation
+        prefManager.saveActiveConversationId(convId)
+    }
+    
+    // Clear active conversation on dispose
+    DisposableEffect(Unit) {
+        onDispose {
+            prefManager.clearActiveConversationId()
+        }
     }
 
     // Scroll to bottom when messages change

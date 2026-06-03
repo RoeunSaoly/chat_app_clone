@@ -29,15 +29,15 @@ data class BottomNavItem(
 @Composable
 fun MessengerBottomNavBar(
     selectedIndex: Int,
+    notificationBadgeCount: Int = 0,
     onItemSelected: (Int) -> Unit
 ) {
     val items = listOf(
         BottomNavItem("Chats", Icons.Filled.ChatBubble, Icons.Outlined.ChatBubbleOutline, badgeCount = 0),
         BottomNavItem("People", Icons.Filled.People, Icons.Outlined.PeopleOutline, badgeCount = 0),
-        BottomNavItem("Notifications", Icons.Filled.Notifications, Icons.Outlined.Notifications, badgeCount = 0),
+        BottomNavItem("Notifications", Icons.Filled.Notifications, Icons.Outlined.Notifications, badgeCount = notificationBadgeCount),
         BottomNavItem("Setting", Icons.Filled.Settings, Icons.Outlined.Settings, badgeCount = 0),
-
-        )
+    )
 
     NavigationBar(
         containerColor = MaterialTheme.colorScheme.surface,

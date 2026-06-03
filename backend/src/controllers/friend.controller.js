@@ -52,6 +52,29 @@ export const acceptFriendRequest = asyncHandler(async (req, res) => {
   }
 
   await friendRepository.acceptFriendRequest(userId, parseInt(friendId));
+
+  // Get current user info (the one who accepted)
+  const user = await userRepository.findUserById(userId);
+
+  // Send notification to the person who sent the request
+  await createNotification({
+    user_id: parseInt(friendId),
+    type: "friend_accepted",
+    title: "Friend Request Accepted",
+    content: `${user.username} accepted your friend request.`,
+    related_id: userId
+  });
+
+  // Send Push Notification
+  await sendPushNotification(parseInt(friendId), {
+    title: "Friend Request Accepted",
+    body: `${user.username} accepted your friend request.`,
+    data: {
+      type: "friend_accepted",
+      senderId: userId.toString()
+    }
+  });
+
   res.json({ success: true, message: "Friend request accepted" });
 });
 

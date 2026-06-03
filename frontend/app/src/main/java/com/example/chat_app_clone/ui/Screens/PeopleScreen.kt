@@ -30,6 +30,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.chat_app_clone.data.model.User
 import com.example.chat_app_clone.ui.components.MessengerBottomNavBar
 import com.example.chat_app_clone.ui.components.UserAvatar
+import com.example.chat_app_clone.viewmodel.NotificationViewModel
 import com.example.chat_app_clone.viewmodel.PeopleViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -44,7 +45,9 @@ fun PeopleScreen(
     onNotificationsTapsClick: () -> Unit = {}
 ) {
     val viewModel: PeopleViewModel = viewModel()
+    val notificationViewModel: NotificationViewModel = viewModel()
     val uiState by viewModel.uiState.collectAsState()
+    val notificationUiState by notificationViewModel.uiState.collectAsState()
     var selectedTab by remember { mutableIntStateOf(1) }
 
 
@@ -89,6 +92,7 @@ fun PeopleScreen(
         bottomBar = {
             MessengerBottomNavBar(
                 selectedIndex = selectedTab,
+                notificationBadgeCount = notificationUiState.unreadCount,
                 onItemSelected = { index ->
                     selectedTab = index
                     when (index) {

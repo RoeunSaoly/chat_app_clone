@@ -16,6 +16,7 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.collectAsState
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.chat_app_clone.viewmodel.SettingViewModel
+import com.example.chat_app_clone.viewmodel.NotificationViewModel
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -73,7 +74,9 @@ fun SettingScreen(
     onTermsClick: () -> Unit = {}
 ) {
     val viewModel: SettingViewModel = viewModel()
+    val notificationViewModel: NotificationViewModel = viewModel()
     val uiState by viewModel.uiState.collectAsState()
+    val notificationUiState by notificationViewModel.uiState.collectAsState()
     val user = uiState.user
 
     val isLightTheme = MaterialTheme.colorScheme.surface == Color.White
@@ -255,6 +258,7 @@ fun SettingScreen(
         bottomBar = {
             MessengerBottomNavBar(
                 selectedIndex = selectedTab,
+                notificationBadgeCount = notificationUiState.unreadCount,
                 onItemSelected = { index ->
                     selectedTab = index
                     when (index) {

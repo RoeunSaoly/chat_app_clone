@@ -296,6 +296,19 @@ class SocketManager private constructor() {
         addListener("user_offline", listener)
     }
 
+    fun onNewNotification(callback: (JSONObject) -> Unit) {
+        addListener("new_notification") { args ->
+            try {
+                val data = args.firstOrNull()
+                if (data is JSONObject) {
+                    callback(data)
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+    }
+
     fun onError(callback: (String) -> Unit) {
         addListener("error") { args ->
             val message = args.firstOrNull()?.toString() ?: "Unknown error"

@@ -1,11 +1,40 @@
 package com.example.chat_app_clone.data.repository
 
 import com.example.chat_app_clone.data.model.User
+import com.example.chat_app_clone.network.NotificationsData
 import com.example.chat_app_clone.network.RetrofitClient
 import com.example.chat_app_clone.network.UpdateProfileRequest
 
 class UserRepository {
     private val userApi = RetrofitClient.userApi
+
+    suspend fun getNotifications(limit: Int = 20, offset: Int = 0): Result<NotificationsData> = runCatching {
+        val response = userApi.getNotifications(limit, offset)
+        val body = response.body()
+        if (!response.isSuccessful || body?.success != true || body.data == null) {
+            throw Exception(body?.error ?: "Failed to load notifications")
+        }
+        body.data
+    }
+
+    suspend fun markNotificationRead(id: Long): Result<Unit> = runCatching {
+        val response = userApi.markNotificationRead(id)
+        if (!response.isSuccessful) throw Exception("Failed to mark notification as read")
+    }
+
+    suspend fun markAllNotificationsRead(): Result<Unit> = runCatching {
+        val response = userApi.markAllNotificationsRead()
+        if (!response.isSuccessful) throw Exception("Failed to mark all notifications as read")
+    }
+
+    suspend fun getUnreadNotificationCount(): Result<Int> = runCatching {
+        val response = userApi.getUnreadNotificationCount()
+        val body = response.body()
+        if (!response.isSuccessful || body?.success != true || body.data == null) {
+            throw Exception(body?.error ?: "Failed to load unread count")
+        }
+        body.data.count
+    }
 
     suspend fun searchUsers(query: String): Result<List<User>> = runCatching {
         val response = userApi.searchUsers(query.takeIf { it.isNotBlank() })
