@@ -53,5 +53,6 @@ data class UserProfileResponse(
 
 data class UpdateProfileRequest(
     @SerializedName("username") val username: String? = null,
-    @SerializedName("avatar") val avatar: String? = null
+    @SerializedName("avatar") val avatar: String? = null,
+    @SerializedName("fcm_token") val fcmToken: String? = null
 )

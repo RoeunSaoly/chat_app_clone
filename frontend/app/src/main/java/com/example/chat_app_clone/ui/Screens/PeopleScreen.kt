@@ -40,7 +40,8 @@ fun PeopleScreen(
     onProfileClick: (Long) -> Unit = {},
     onHomeTabClick: () -> Unit = {},
     onSettingTabClick: () -> Unit = {},
-    onSearchClick: () -> Unit = {}
+    onSearchClick: () -> Unit = {},
+    onNotificationsTapsClick: () -> Unit = {}
 ) {
     val viewModel: PeopleViewModel = viewModel()
     val uiState by viewModel.uiState.collectAsState()
@@ -92,7 +93,8 @@ fun PeopleScreen(
                     selectedTab = index
                     when (index) {
                         0 -> onHomeTabClick()
-                        2 -> onSettingTabClick()
+                        2 -> onNotificationsTapsClick()
+                        3 -> onSettingTabClick()
                     }
                 }
             )

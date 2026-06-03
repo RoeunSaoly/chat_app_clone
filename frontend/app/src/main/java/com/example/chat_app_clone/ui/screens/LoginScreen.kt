@@ -31,6 +31,8 @@ import com.example.chat_app_clone.ui.theme.MessengerBlue
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import com.google.firebase.messaging.FirebaseMessaging
+import android.util.Log
 
 @Composable
 fun LoginScreen(
@@ -55,6 +57,24 @@ fun LoginScreen(
                 }
                 com.example.chat_app_clone.network.RetrofitClient.setAuthToken(response.accessToken)
                 com.example.chat_app_clone.network.SocketManager.getInstance().connectSocket(response.accessToken)
+                
+                // Get FCM Token and send to server
+                FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
+                    if (!task.isSuccessful) {
+                        Log.w("LoginScreen", "Fetching FCM registration token failed", task.exception)
+                        return@addOnCompleteListener
+                    }
+                    val token = task.result
+                    com.example.chat_app_clone.data.PreferenceManager(context).saveFcmToken(token)
+                    kotlinx.coroutines.CoroutineScope(Dispatchers.IO).launch {
+                        try {
+                            RetrofitClient.userApi.updateProfile(com.example.chat_app_clone.network.UpdateProfileRequest(fcmToken = token))
+                        } catch (e: Exception) {
+                            e.printStackTrace()
+                        }
+                    }
+                }
+                
                 onLoginSuccess()
             }
         }

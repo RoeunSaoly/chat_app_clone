@@ -59,6 +59,7 @@ fun SettingScreen(
     onHomeTabClick: () -> Unit = {},
     onLogoutClick: () -> Unit = {},
     onEditProfileClick: () -> Unit = {},
+    onNotificationsTapsClick: () -> Unit = {},
     // Account
     onPersonalInfoClick: () -> Unit = {},
     onPrivacyClick: () -> Unit = {},
@@ -81,7 +82,7 @@ fun SettingScreen(
     var showLogoutDialog by remember { mutableStateOf(false) }
     var darkModeEnabled by remember { mutableStateOf(true) }
     var messagePreviewEnabled by remember { mutableStateOf(true) }
-    var selectedTab by remember { mutableIntStateOf(2) } // Settings tab active
+    var selectedTab by remember { mutableIntStateOf(3) } // Settings tab active
 
     // ---------------------------------------------------------------------------
     // Logout confirmation dialog
@@ -259,6 +260,7 @@ fun SettingScreen(
                     when (index) {
                         0 -> onHomeTabClick()
                         1 -> onPeopleTabClick()
+                        2 -> onNotificationsTapsClick()
                     }
                 }
             )
