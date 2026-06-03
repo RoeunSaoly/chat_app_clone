@@ -38,7 +38,8 @@ fun HomeScreen(
     onCreateGroupClick: () -> Unit = {},
     onCallsTabClick: () -> Unit = {},
     onSettingTabClick: () -> Unit = {},
-    onPeopleTabClick: () -> Unit = {}
+    onPeopleTabClick: () -> Unit = {},
+    onNotificationsTapsClick: () -> Unit = {}
 ) {
     val viewModel: HomeViewModel = viewModel()
     val uiState by viewModel.uiState.collectAsState()
@@ -126,7 +127,8 @@ fun HomeScreen(
                     selectedTab = index
                     when (index) {
                         1 -> onPeopleTabClick()
-                        2 -> onSettingTabClick()
+                        2 -> onNotificationsTapsClick()
+                        3 -> onSettingTabClick()
                     }
                 }
             )

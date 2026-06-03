@@ -77,6 +77,7 @@ fun NavGraph(
                 onCallsTabClick = { navController.navigate(Screen.Calls.route) },
                 onPeopleTabClick = { navController.navigate(Screen.People.route) },
                 onSettingTabClick = { navController.navigate(Screen.Setting.route) },
+                onNotificationsTapsClick = { navController.navigate(Screen.Notifications.route) },
             )
         }
 
@@ -95,6 +96,7 @@ fun NavGraph(
                 onHomeTabClick = {navController.navigate(Screen.Home.route)},
                 onSettingTabClick = { navController.navigate(Screen.Setting.route) },
                 onSearchClick = { navController.navigate(Screen.Search.route) },
+                onNotificationsTapsClick = { navController.navigate(Screen.Notifications.route) },
                 )
         }
 
@@ -104,12 +106,23 @@ fun NavGraph(
                 onBack = { navController.popBackStack() },
                 onHomeTabClick = {navController.navigate(Screen.Home.route)},
                 onPeopleTabClick = { navController.navigate(Screen.People.route) },
+                onNotificationsTapsClick = { navController.navigate(Screen.Notifications.route) },
                 onLogoutClick = {
                     MainActivity.logout(context)
                     navController.navigate(Screen.Welcome.route) {
                         popUpTo(0) { inclusive = true }
                     }
                 }
+            )
+        }
+
+        // Notifications Screen
+        composable(Screen.Notifications.route) {
+            NotificationScreen(
+                onBack = { navController.popBackStack() },
+                onHomeTabClick = {navController.navigate(Screen.Home.route)},
+                onPeopleTabClick = { navController.navigate(Screen.People.route) },
+                onSettingTabClick = { navController.navigate(Screen.Setting.route) },
             )
         }
 

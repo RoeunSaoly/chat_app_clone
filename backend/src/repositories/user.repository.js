@@ -48,7 +48,7 @@ export const createUser = async (username, email, password) => {
  * Update user
  */
 export const updateUser = async (id, updates) => {
-  const { username, email, avatar, status_message, is_online, last_seen } = updates;
+  const { username, email, avatar, status_message, is_online, last_seen, fcm_token } = updates;
 
   const result = await pool.query(
     `UPDATE users 
@@ -57,10 +57,11 @@ export const updateUser = async (id, updates) => {
          avatar = COALESCE($3, avatar),
          status_message = COALESCE($4, status_message),
          is_online = COALESCE($5, is_online),
-         last_seen = COALESCE($6, last_seen)
-     WHERE id = $7
-     RETURNING id, username, email, avatar, status_message, is_online, last_seen, created_at`,
-    [username, email, avatar, status_message, is_online, last_seen, id]
+         last_seen = COALESCE($6, last_seen),
+         fcm_token = COALESCE($7, fcm_token)
+     WHERE id = $8
+     RETURNING id, username, email, avatar, status_message, is_online, last_seen, fcm_token, created_at`,
+    [username, email, avatar, status_message, is_online, last_seen, fcm_token, id]
   );
   return result.rows[0];
 };

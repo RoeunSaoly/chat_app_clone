@@ -3,6 +3,7 @@ import * as notificationService from "../modules/notification/notification.servi
 import { emitToConversation, emitToUser } from "../utils/socketEmitter.js";
 import { canAccessConversation } from "./conversation.service.js";
 import { AppError } from "../middleware/error.middleware.js";
+import { sendPushNotification } from "./fcm.service.js";
 
 /**
  * Send a message and create notifications for all conversation members
@@ -38,13 +39,28 @@ export const sendMessage = async (senderId, conversationId, content, messageType
   // 5. Create notification for each member
   const notificationPromises = members.map(async (member) => {
     try {
-      return await notificationService.createNotification({
+      const notif = await notificationService.createNotification({
         user_id: member.user_id,
         type: "message",
         title: senderUsername || "New Message",
         content: content ? content.substring(0, 50) : "",
         related_id: conversationId,
       });
+
+      // Send Push Notification
+      // We can always send the push notification. 
+      // FCM and the Android app can handle if it should be displayed.
+      await sendPushNotification(member.user_id, {
+        title: senderUsername || "New Message",
+        body: content ? content.substring(0, 100) : "Sent an attachment",
+        data: {
+          type: "message",
+          conversationId: conversationId.toString(),
+          messageId: message.id.toString()
+        }
+      });
+
+      return notif;
     } catch (error) {
       console.error("notification error:", error.message);
       return null;

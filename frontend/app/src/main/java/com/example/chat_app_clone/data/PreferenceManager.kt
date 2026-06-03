@@ -11,6 +11,7 @@ class PreferenceManager(context: Context) {
         private const val KEY_REFRESH_TOKEN = "refresh_token"
         private const val KEY_USER_ID = "user_id"
         private const val KEY_USERNAME = "username"
+        private const val KEY_FCM_TOKEN = "fcm_token"
     }
 
     fun saveTokens(access: String, refresh: String) {
@@ -33,6 +34,12 @@ class PreferenceManager(context: Context) {
     }
 
     fun getUserId(): Long = prefs.getLong(KEY_USER_ID, -1)
+
+    fun saveFcmToken(token: String) {
+        prefs.edit().putString(KEY_FCM_TOKEN, token).apply()
+    }
+
+    fun getFcmToken(): String? = prefs.getString(KEY_FCM_TOKEN, null)
 
     fun clear() {
         prefs.edit().clear().apply()

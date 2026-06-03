@@ -1,5 +1,8 @@
 import * as friendRepository from "../repositories/friend.repository.js";
+import * as userRepository from "../repositories/user.repository.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
+import { createNotification } from "../modules/notification/notification.service.js";
+import { sendPushNotification } from "../services/fcm.service.js";
 
 export const sendFriendRequest = asyncHandler(async (req, res) => {
   const userId = req.user.id;
@@ -14,6 +17,29 @@ export const sendFriendRequest = asyncHandler(async (req, res) => {
   }
 
   await friendRepository.sendFriendRequest(userId, parseInt(friendId));
+
+  // Get sender info
+  const sender = await userRepository.findUserById(userId);
+
+  // Send notification to friendId
+  await createNotification({
+    user_id: parseInt(friendId),
+    type: "friend_request",
+    title: "New Friend Request",
+    content: `${sender.username} sent you a friend request.`,
+    related_id: userId
+  });
+
+  // Send Push Notification
+  await sendPushNotification(parseInt(friendId), {
+    title: "New Friend Request",
+    body: `${sender.username} sent you a friend request.`,
+    data: {
+      type: "friend_request",
+      senderId: userId.toString()
+    }
+  });
+
   res.json({ success: true, message: "Friend request sent" });
 });
 
