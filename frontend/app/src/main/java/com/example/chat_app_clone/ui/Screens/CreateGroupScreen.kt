@@ -13,7 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.chat_app_clone.data.model.Conversation
 import com.example.chat_app_clone.viewmodel.UserSearchViewModel
 
@@ -21,9 +21,9 @@ import com.example.chat_app_clone.viewmodel.UserSearchViewModel
 @Composable
 fun CreateGroupScreen(
     onBack: () -> Unit = {},
-    onConversationCreated: (Conversation) -> Unit = {}
+    onConversationCreated: (Conversation) -> Unit = {},
+    viewModel: UserSearchViewModel = hiltViewModel()
 ) {
-    val viewModel: UserSearchViewModel = viewModel()
     val uiState by viewModel.uiState.collectAsState()
     var groupName by remember { mutableStateOf("") }
 

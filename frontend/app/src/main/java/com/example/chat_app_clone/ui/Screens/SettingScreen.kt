@@ -14,7 +14,7 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.collectAsState
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.chat_app_clone.viewmodel.SettingViewModel
 import com.example.chat_app_clone.viewmodel.NotificationViewModel
 import androidx.compose.ui.Alignment
@@ -71,10 +71,10 @@ fun SettingScreen(
     onMediaStorageClick: () -> Unit = {},
     // Support
     onHelpCenterClick: () -> Unit = {},
-    onTermsClick: () -> Unit = {}
+    onTermsClick: () -> Unit = {},
+    viewModel: SettingViewModel = hiltViewModel(),
+    notificationViewModel: NotificationViewModel = hiltViewModel()
 ) {
-    val viewModel: SettingViewModel = viewModel()
-    val notificationViewModel: NotificationViewModel = viewModel()
     val uiState by viewModel.uiState.collectAsState()
     val notificationUiState by notificationViewModel.uiState.collectAsState()
     val user = uiState.user
@@ -86,6 +86,13 @@ fun SettingScreen(
     var darkModeEnabled by remember { mutableStateOf(true) }
     var messagePreviewEnabled by remember { mutableStateOf(true) }
     var selectedTab by remember { mutableIntStateOf(3) } // Settings tab active
+
+    // Handle logout success
+    LaunchedEffect(uiState.isLoggedOut) {
+        if (uiState.isLoggedOut) {
+            onLogoutClick()
+        }
+    }
 
     // ---------------------------------------------------------------------------
     // Logout confirmation dialog
@@ -99,7 +106,7 @@ fun SettingScreen(
                 TextButton(
                     onClick = {
                         showLogoutDialog = false
-                        onLogoutClick()
+                        viewModel.logout()
                     }
                 ) {
                     Text("Log out", color = MaterialTheme.colorScheme.error)

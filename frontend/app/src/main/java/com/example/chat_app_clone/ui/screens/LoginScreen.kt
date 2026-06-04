@@ -20,27 +20,17 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.chat_app_clone.MainActivity
-import com.example.chat_app_clone.network.AuthService
-import androidx.compose.runtime.collectAsState
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.chat_app_clone.viewmodel.LoginViewModel
-import com.example.chat_app_clone.network.RetrofitClient
-import com.example.chat_app_clone.network.SocketManager
 import com.example.chat_app_clone.ui.theme.MessengerBlue
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import com.google.firebase.messaging.FirebaseMessaging
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.example.chat_app_clone.viewmodel.LoginViewModel
 import android.util.Log
 
 @Composable
 fun LoginScreen(
     onLoginSuccess: () -> Unit = {},
     onNavigateToRegister: () -> Unit = {},
-    viewModel: LoginViewModel = viewModel()
+    viewModel: LoginViewModel = hiltViewModel()
 ) {
-    val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsState()
     
     var email by remember { mutableStateOf("") }
@@ -48,35 +38,9 @@ fun LoginScreen(
     var passwordVisible by remember { mutableStateOf(false) }
 
     // Handle successful login
-    LaunchedEffect(uiState.authResponse) {
-        uiState.authResponse?.let { response ->
-            if (response.success && response.accessToken != null) {
-                com.example.chat_app_clone.MainActivity.saveToken(context, response.accessToken, response.refreshToken ?: "")
-                response.user?.let { user ->
-                    com.example.chat_app_clone.MainActivity.saveCurrentUserId(context, user.id, user.username ?: "")
-                }
-                com.example.chat_app_clone.network.RetrofitClient.setAuthToken(response.accessToken)
-                com.example.chat_app_clone.network.SocketManager.getInstance().connectSocket(response.accessToken)
-                
-                // Get FCM Token and send to server
-                FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
-                    if (!task.isSuccessful) {
-                        Log.w("LoginScreen", "Fetching FCM registration token failed", task.exception)
-                        return@addOnCompleteListener
-                    }
-                    val token = task.result
-                    com.example.chat_app_clone.data.PreferenceManager(context).saveFcmToken(token)
-                    kotlinx.coroutines.CoroutineScope(Dispatchers.IO).launch {
-                        try {
-                            RetrofitClient.userApi.updateProfile(com.example.chat_app_clone.network.UpdateProfileRequest(fcmToken = token))
-                        } catch (e: Exception) {
-                            e.printStackTrace()
-                        }
-                    }
-                }
-                
-                onLoginSuccess()
-            }
+    LaunchedEffect(uiState.isSuccess) {
+        if (uiState.isSuccess) {
+            onLoginSuccess()
         }
     }
 

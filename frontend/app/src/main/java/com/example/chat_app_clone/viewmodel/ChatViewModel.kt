@@ -5,12 +5,15 @@ import androidx.lifecycle.viewModelScope
 import com.example.chat_app_clone.data.model.Message
 import com.example.chat_app_clone.data.model.Conversation
 import com.example.chat_app_clone.data.repository.ChatRepository
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import javax.inject.Inject
+import com.example.chat_app_clone.data.PreferenceManager
 
 data class ChatUiState(
     val messages: List<Message> = emptyList(),
@@ -20,10 +23,14 @@ data class ChatUiState(
     val conversation: Conversation? = null
 )
 
-class ChatViewModel(
-    private val repository: ChatRepository = ChatRepository.getInstance(),
-    private val currentUserId: Long
+@HiltViewModel
+class ChatViewModel @Inject constructor(
+    private val repository: ChatRepository,
+    private val preferenceManager: PreferenceManager
 ) : ViewModel() {
+
+    private val currentUserId: Long = preferenceManager.getUserId()
+    fun getCurrentUserId(): Long = currentUserId
 
     private val _uiState = MutableStateFlow(ChatUiState())
     val uiState: StateFlow<ChatUiState> = _uiState.asStateFlow()

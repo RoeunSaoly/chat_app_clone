@@ -4,11 +4,13 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.chat_app_clone.data.model.User
 import com.example.chat_app_clone.data.repository.UserRepository
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 data class PeopleUiState(
     val recommendedFriends: List<User> = emptyList(),
@@ -18,7 +20,10 @@ data class PeopleUiState(
     val error: String? = null
 )
 
-class PeopleViewModel(private val repository: UserRepository = UserRepository()) : ViewModel() {
+@HiltViewModel
+class PeopleViewModel @Inject constructor(
+    private val repository: UserRepository
+) : ViewModel() {
 
     private val _uiState = MutableStateFlow(PeopleUiState())
     val uiState: StateFlow<PeopleUiState> = _uiState.asStateFlow()

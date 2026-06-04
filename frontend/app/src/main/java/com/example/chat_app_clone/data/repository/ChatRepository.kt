@@ -7,22 +7,14 @@ import com.example.chat_app_clone.network.model.*
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import javax.inject.Inject
+import javax.inject.Singleton
 
-class ChatRepository private constructor() {
-
-    companion object {
-        @Volatile
-        private var instance: ChatRepository? = null
-
-        fun getInstance(): ChatRepository {
-            return instance ?: synchronized(this) {
-                instance ?: ChatRepository().also { instance = it }
-            }
-        }
-    }
-
-    private val chatApi = RetrofitClient.chatApi
-    private val socketManager = SocketManager.getInstance()
+@Singleton
+class ChatRepository @Inject constructor(
+    private val chatApi: ChatApi,
+    private val socketManager: SocketManager
+) {
 
     private val _newMessages = MutableSharedFlow<Message>(extraBufferCapacity = 16)
     val newMessages: SharedFlow<Message> = _newMessages.asSharedFlow()

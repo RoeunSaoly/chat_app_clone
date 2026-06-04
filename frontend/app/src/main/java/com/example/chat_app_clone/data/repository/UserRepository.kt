@@ -2,11 +2,13 @@ package com.example.chat_app_clone.data.repository
 
 import com.example.chat_app_clone.data.model.User
 import com.example.chat_app_clone.network.NotificationsData
-import com.example.chat_app_clone.network.RetrofitClient
+import com.example.chat_app_clone.network.UserApi
 import com.example.chat_app_clone.network.UpdateProfileRequest
+import javax.inject.Inject
+import javax.inject.Singleton
 
-class UserRepository {
-    private val userApi = RetrofitClient.userApi
+@Singleton
+class UserRepository @Inject constructor(private val userApi: UserApi) {
 
     suspend fun getNotifications(limit: Int = 20, offset: Int = 0): Result<NotificationsData> = runCatching {
         val response = userApi.getNotifications(limit, offset)

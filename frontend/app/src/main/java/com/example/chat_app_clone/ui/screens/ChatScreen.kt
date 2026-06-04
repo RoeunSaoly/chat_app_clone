@@ -33,7 +33,7 @@ import com.example.chat_app_clone.ui.components.UserAvatar
 import com.example.chat_app_clone.ui.theme.MessengerBlue
 import com.example.chat_app_clone.ui.theme.OnlineGreen
 import com.example.chat_app_clone.viewmodel.ChatViewModel
-import com.example.chat_app_clone.viewmodel.ChatViewModelFactory
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.compose.ui.platform.LocalContext
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -41,23 +41,20 @@ import androidx.compose.ui.platform.LocalContext
 fun ChatScreen(
     conversationId: String,
     userId: String,
-    currentUserId: Long,
     onBack: () -> Unit = {},
-    onProfileClick: () -> Unit = {}
+    onProfileClick: () -> Unit = {},
+    viewModel: ChatViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
     val prefManager = remember { PreferenceManager(context) }
     
-    val viewModel: ChatViewModel = viewModel(
-        factory = ChatViewModelFactory(currentUserId)
-    )
-
     val uiState by viewModel.uiState.collectAsState()
     val messages = uiState.messages
     val isLoading = uiState.isLoading
     val error = uiState.error
     val typingUsers = uiState.typingUsers
     val conversation = uiState.conversation
+    val currentUserId = viewModel.getCurrentUserId()
     val displayName = conversation?.displayName(currentUserId) ?: "Chat"
     val displayAvatar = conversation?.displayAvatar(currentUserId)
     val isOtherUserOnline = conversation?.isOtherUserOnline(currentUserId) ?: false
@@ -374,5 +371,5 @@ private fun ChatInputBar(
 @Preview(showBackground = true)
 @Composable
 fun ChatScreenPreview() {
-    ChatScreen(conversationId = "1", userId = "2", currentUserId = 1L)
+    ChatScreen(conversationId = "1", userId = "2")
 }

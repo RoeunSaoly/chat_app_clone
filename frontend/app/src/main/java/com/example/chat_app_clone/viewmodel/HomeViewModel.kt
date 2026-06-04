@@ -6,10 +6,13 @@ import com.example.chat_app_clone.data.model.Conversation
 import com.example.chat_app_clone.data.model.User
 import com.example.chat_app_clone.data.repository.ChatRepository
 import com.example.chat_app_clone.data.repository.UserRepository
+import com.example.chat_app_clone.data.PreferenceManager
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 data class HomeUiState(
     val conversations: List<Conversation> = emptyList(),
@@ -19,10 +22,14 @@ data class HomeUiState(
     val error: String? = null
 )
 
-class HomeViewModel(
-    private val chatRepository: ChatRepository = ChatRepository.getInstance(),
-    private val userRepository: UserRepository = UserRepository()
+@HiltViewModel
+class HomeViewModel @Inject constructor(
+    private val chatRepository: ChatRepository,
+    private val userRepository: UserRepository,
+    private val preferenceManager: PreferenceManager
 ) : ViewModel() {
+
+    fun getCurrentUserId(): Long = preferenceManager.getUserId()
 
     private val _uiState = MutableStateFlow(HomeUiState())
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()

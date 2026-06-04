@@ -30,6 +30,8 @@ import com.example.chat_app_clone.ui.components.*
 import com.example.chat_app_clone.ui.theme.MessengerBlue
 import com.example.chat_app_clone.viewmodel.HomeViewModel
 import com.example.chat_app_clone.viewmodel.NotificationViewModel
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.compose.runtime.collectAsState
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -40,18 +42,16 @@ fun HomeScreen(
     onCallsTabClick: () -> Unit = {},
     onSettingTabClick: () -> Unit = {},
     onPeopleTabClick: () -> Unit = {},
-    onNotificationsTapsClick: () -> Unit = {}
+    onNotificationsTapsClick: () -> Unit = {},
+    viewModel: HomeViewModel = hiltViewModel(),
+    notificationViewModel: NotificationViewModel = hiltViewModel()
 ) {
-    val viewModel: HomeViewModel = viewModel()
-    val notificationViewModel: NotificationViewModel = viewModel()
     val uiState by viewModel.uiState.collectAsState()
     val notificationUiState by notificationViewModel.uiState.collectAsState()
     val conversations = uiState.conversations
     val isLoading = uiState.isLoading
     val error = uiState.error
-    val currentUserId = com.example.chat_app_clone.MainActivity.getCurrentUserId(
-        androidx.compose.ui.platform.LocalContext.current
-    ).toLongOrNull() ?: 0L
+    val currentUserId = viewModel.getCurrentUserId()
 
     var selectedTab by remember { mutableIntStateOf(0) }
 

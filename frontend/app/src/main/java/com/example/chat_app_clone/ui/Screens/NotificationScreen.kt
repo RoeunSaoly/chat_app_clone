@@ -20,7 +20,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.chat_app_clone.network.NotificationResponse
 import com.example.chat_app_clone.ui.components.MessengerBottomNavBar
 import com.example.chat_app_clone.ui.theme.MessengerBlue
@@ -29,7 +29,7 @@ import com.example.chat_app_clone.viewmodel.NotificationViewModel
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NotificationScreen(
-    viewModel: NotificationViewModel = viewModel(),
+    viewModel: NotificationViewModel = hiltViewModel(),
     onBack: () -> Unit = {},
     onNotificationClick: (NotificationResponse) -> Unit = {},
     onHomeTabClick: () -> Unit = {},

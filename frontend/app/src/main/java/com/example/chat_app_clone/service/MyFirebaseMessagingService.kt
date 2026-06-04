@@ -10,18 +10,27 @@ import androidx.core.app.NotificationCompat
 import com.example.chat_app_clone.MainActivity
 import com.example.chat_app_clone.R
 import com.example.chat_app_clone.data.PreferenceManager
+import com.example.chat_app_clone.network.UserApi
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
+import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
+@AndroidEntryPoint
 class MyFirebaseMessagingService : FirebaseMessagingService() {
+
+    @Inject
+    lateinit var preferenceManager: PreferenceManager
+
+    @Inject
+    lateinit var userApi: UserApi
 
     override fun onNewToken(token: String) {
         super.onNewToken(token)
         // Save token to preferences to be sent to server later
-        val preferenceManager = PreferenceManager(applicationContext)
         preferenceManager.saveFcmToken(token)
         
         // If user is already logged in, send token to server
@@ -40,7 +49,6 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
         
         // If it's a message and user is already in that chat, don't show notification
         if (type == "message" && conversationId != null) {
-            val preferenceManager = PreferenceManager(applicationContext)
             val activeConversationId = preferenceManager.getActiveConversationId()
             if (activeConversationId == conversationId) {
                 return
@@ -96,10 +104,9 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
     }
 
     private fun sendTokenToServer(fcmToken: String, authToken: String) {
-        // We will call RetrofitClient.userApi.updateProfile here
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                com.example.chat_app_clone.network.RetrofitClient.userApi.updateProfile(
+                userApi.updateProfile(
                     com.example.chat_app_clone.network.UpdateProfileRequest(fcmToken = fcmToken)
                 )
             } catch (e: Exception) {
