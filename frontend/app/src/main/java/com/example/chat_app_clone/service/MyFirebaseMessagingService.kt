@@ -48,11 +48,14 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
         }
 
         // Check if message contains a notification payload.
+        // We do not show a system notification popup when the app is in the foreground
+        /*
         remoteMessage.notification?.let {
             val title = it.title ?: "New Notification"
             val body = it.body ?: ""
             sendNotification(title, body, data)
         }
+        */
     }
 
     private fun sendNotification(title: String, messageBody: String, data: Map<String, String>) {

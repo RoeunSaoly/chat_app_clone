@@ -198,13 +198,6 @@ fun HomeScreen(
                             color = MaterialTheme.colorScheme.onSurface,
                             modifier = Modifier.weight(1f)
                         )
-                        Text(
-                            "Requests",
-                            fontSize = 14.sp,
-                            color = MessengerBlue,
-                            fontWeight = FontWeight.Medium,
-                            modifier = Modifier.clickable { onPeopleTabClick() }
-                        )
                     }
                 }
 
