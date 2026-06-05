@@ -1,8 +1,17 @@
 import { createClient } from "redis";
 
-const redisUrl = process.env.REDIS_PASSWORD 
-  ? `redis://:${process.env.REDIS_PASSWORD}@${process.env.REDIS_HOST}:${process.env.REDIS_PORT || 6379}`
-  : `redis://${process.env.REDIS_HOST}:${process.env.REDIS_PORT || 6379}`;
+let redisUrl = process.env.REDIS_URL;
+
+if (!redisUrl) {
+  redisUrl = process.env.REDIS_PASSWORD 
+    ? `redis://:${process.env.REDIS_PASSWORD}@${process.env.REDIS_HOST}:${process.env.REDIS_PORT || 6379}`
+    : `redis://${process.env.REDIS_HOST}:${process.env.REDIS_PORT || 6379}`;
+}
+
+// Ensure the URL has the redis:// prefix
+if (redisUrl && !redisUrl.startsWith('redis://') && !redisUrl.startsWith('rediss://')) {
+  redisUrl = `redis://${redisUrl}`;
+}
 
 const pubClient = createClient({
   url: redisUrl
