@@ -11,8 +11,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.chat_app_clone.MainActivity
-import com.example.chat_app_clone.ui.Screens.HomeScreen
-import com.example.chat_app_clone.ui.Screens.SettingScreen
+import com.example.chat_app_clone.ui.Screens.HomesScreen
+import com.example.chat_app_clone.ui.Screens.SettingsScreen
 import com.example.chat_app_clone.ui.screens.*
 
 import com.example.chat_app_clone.data.PreferenceManager
@@ -56,8 +56,8 @@ fun NavGraph(
         composable(Screen.Register.route) {
             RegisterScreen(
                 onRegisterSuccess = {
-                    navController.navigate(Screen.Login.route) {
-                        popUpTo(Screen.Register.route) { inclusive = true }
+                    navController.navigate(Screen.Home.route) {
+                        popUpTo(Screen.Welcome.route) { inclusive = true }
                     }
                 },
                 onBackToLogin = { navController.popBackStack() }
@@ -66,7 +66,7 @@ fun NavGraph(
 
         // Home (chat list)
         composable(Screen.Home.route) {
-            HomeScreen(
+            HomesScreen(
                 onConversationClick = { conversation ->
                     val mine = currentUserId
                     val otherId = conversation.otherUser?.userId
@@ -77,8 +77,8 @@ fun NavGraph(
                     )
                 },
                 onSearchClick = { navController.navigate(Screen.Search.route) },
-                onCreateGroupClick = { navController.navigate(Screen.CreateGroup.route) },
-                onCallsTabClick = { navController.navigate(Screen.Calls.route) },
+                onCreateGroupClick = { },
+                onCallsTabClick = { },
                 onPeopleTabClick = { navController.navigate(Screen.People.route) },
                 onSettingTabClick = { navController.navigate(Screen.Setting.route) },
                 onNotificationsTapsClick = { navController.navigate(Screen.Notifications.route) },
@@ -94,9 +94,7 @@ fun NavGraph(
                     // and let the ChatScreen handle finding/creating the conversation
                     navController.navigate(Screen.Chat.createRoute("0", userId.toString()))
                 },
-                onProfileClick = { userId ->
-                    navController.navigate(Screen.Profile.createRoute(userId.toString()))
-                },
+                onProfileClick = {},
                 onHomeTabClick = {navController.navigate(Screen.Home.route)},
                 onSettingTabClick = { navController.navigate(Screen.Setting.route) },
                 onSearchClick = { navController.navigate(Screen.Search.route) },
@@ -106,7 +104,7 @@ fun NavGraph(
 
         // Setting Screen
         composable(Screen.Setting.route) {
-            SettingScreen(
+            SettingsScreen(
                 onBack = { navController.popBackStack() },
                 onHomeTabClick = {navController.navigate(Screen.Home.route)},
                 onPeopleTabClick = { navController.navigate(Screen.People.route) },

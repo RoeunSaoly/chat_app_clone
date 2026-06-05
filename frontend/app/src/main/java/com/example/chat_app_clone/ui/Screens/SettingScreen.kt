@@ -54,7 +54,7 @@ private data class SettingItem(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SettingScreen(
+fun SettingsScreen(
     onBack: () -> Unit = {},
     onPeopleTabClick: () -> Unit = {},
     onHomeTabClick: () -> Unit = {},
@@ -157,8 +157,8 @@ fun SettingScreen(
             icon = Icons.Default.Notifications,
             iconBg = Color(0xFFEEEDFE),
             iconTint = Color(0xFF534AB7),
-            badgeCount = 3,
-            onClick = onNotificationsClick
+            badgeCount = 0,
+            onClick = { onNotificationsTapsClick() }
         ),
         SettingItem(
             title = "Dark mode",
@@ -607,5 +607,4 @@ private fun SectionLabel(title: String) {
 @Preview(showBackground = true)
 @Composable
 fun SettingsScreenPreview() {
-    SettingScreen()
 }
