@@ -35,7 +35,7 @@ import androidx.compose.runtime.collectAsState
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreen(
+fun HomesScreen(
     onConversationClick: (Conversation) -> Unit = {},
     onSearchClick: () -> Unit = {},
     onCreateGroupClick: () -> Unit = {},
@@ -298,5 +298,4 @@ fun HomeScreen(
 @Preview(showBackground = true)
 @Composable
 fun HomeScreenPreview() {
-    HomeScreen()
 }

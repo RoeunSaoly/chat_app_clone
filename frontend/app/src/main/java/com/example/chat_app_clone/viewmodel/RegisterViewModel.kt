@@ -10,6 +10,12 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import com.example.chat_app_clone.data.PreferenceManager
+import com.example.chat_app_clone.network.SocketManager
+import com.example.chat_app_clone.network.UserApi
+import com.example.chat_app_clone.network.UpdateProfileRequest
+import com.google.firebase.messaging.FirebaseMessaging
+import android.util.Log
 
 data class RegisterUiState(
     val isLoading: Boolean = false,
@@ -19,7 +25,10 @@ data class RegisterUiState(
 
 @HiltViewModel
 class RegisterViewModel @Inject constructor(
-    private val repository: AuthRepository
+    private val repository: AuthRepository,
+    private val preferenceManager: PreferenceManager,
+    private val socketManager: SocketManager,
+    private val userApi: UserApi
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(RegisterUiState())
@@ -31,7 +40,42 @@ class RegisterViewModel @Inject constructor(
             repository.register(username, email, password)
                 .onSuccess { response ->
                     if (response.success) {
-                        _uiState.value = RegisterUiState(isSuccess = true)
+                        // Auto-login after successful registration
+                        repository.login(email, password)
+                            .onSuccess { loginResponse ->
+                                if (loginResponse.success && loginResponse.accessToken != null) {
+                                    // Save tokens and user info
+                                    preferenceManager.saveTokens(loginResponse.accessToken, loginResponse.refreshToken ?: "")
+                                    loginResponse.user?.let { user ->
+                                        preferenceManager.saveUser(user.id, user.username ?: "")
+                                    }
+                                    
+                                    // Connect socket
+                                    socketManager.connectSocket(loginResponse.accessToken)
+                                    
+                                    // Handle FCM Token
+                                    FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
+                                        if (task.isSuccessful) {
+                                            val token = task.result
+                                            preferenceManager.saveFcmToken(token)
+                                            viewModelScope.launch {
+                                                try {
+                                                    userApi.updateProfile(UpdateProfileRequest(fcmToken = token))
+                                                } catch (e: Exception) {
+                                                    Log.e("RegisterViewModel", "Failed to update FCM token", e)
+                                                }
+                                            }
+                                        }
+                                    }
+                                    
+                                    _uiState.value = RegisterUiState(isSuccess = true)
+                                } else {
+                                    _uiState.value = RegisterUiState(error = loginResponse.error ?: "Login failed")
+                                }
+                            }
+                            .onFailure { exception ->
+                                _uiState.value = RegisterUiState(error = exception.message ?: "Login failed")
+                            }
                     } else {
                         _uiState.value = RegisterUiState(error = response.error ?: "Registration failed")
                     }
