@@ -33,3 +33,5 @@ coil-compose = { group = "io.coil-kt", name = "coil-compose", version.ref = "coi
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+legacy-kapt = { id = "com.android.legacy-kapt", version.ref = "agp" }
+

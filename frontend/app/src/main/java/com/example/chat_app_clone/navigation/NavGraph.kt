@@ -1,6 +1,7 @@
 package com.example.chat_app_clone.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
@@ -14,6 +15,8 @@ import com.example.chat_app_clone.ui.Screens.HomeScreen
 import com.example.chat_app_clone.ui.Screens.SettingScreen
 import com.example.chat_app_clone.ui.screens.*
 
+import com.example.chat_app_clone.data.PreferenceManager
+
 @Composable
 fun NavGraph(
     navController: NavHostController = rememberNavController(),
@@ -21,6 +24,8 @@ fun NavGraph(
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
+    val preferenceManager = remember { PreferenceManager(context) }
+    val currentUserId = preferenceManager.getUserId()
 
     NavHost(
         navController = navController,
@@ -61,10 +66,9 @@ fun NavGraph(
 
         // Home (chat list)
         composable(Screen.Home.route) {
-            val currentUserId = MainActivity.getCurrentUserId(context)
             HomeScreen(
                 onConversationClick = { conversation ->
-                    val mine = currentUserId.toLongOrNull() ?: 0L
+                    val mine = currentUserId
                     val otherId = conversation.otherUser?.userId
                         ?: conversation.members.firstOrNull { it.userId != mine }?.userId
                         ?: 0L
@@ -108,7 +112,6 @@ fun NavGraph(
                 onPeopleTabClick = { navController.navigate(Screen.People.route) },
                 onNotificationsTapsClick = { navController.navigate(Screen.Notifications.route) },
                 onLogoutClick = {
-                    MainActivity.logout(context)
                     navController.navigate(Screen.Welcome.route) {
                         popUpTo(0) { inclusive = true }
                     }
@@ -136,12 +139,10 @@ fun NavGraph(
         ) { backStackEntry ->
             val conversationId = backStackEntry.arguments?.getString("conversationId") ?: ""
             val userId = backStackEntry.arguments?.getString("userId") ?: ""
-            val currentUserId = MainActivity.getCurrentUserId(context)
             
             ChatScreen(
                 conversationId = conversationId,
                 userId = userId,
-                currentUserId = currentUserId.toLongOrNull() ?: 0L,
                 onBack = { navController.popBackStack() },
                 onProfileClick = { navController.navigate(Screen.Profile.createRoute(userId)) }
             )
@@ -162,11 +163,10 @@ fun NavGraph(
 
         // Search screen
         composable(Screen.Search.route) {
-            val currentUserId = MainActivity.getCurrentUserId(context)
             SearchScreen(
                 onBack = { navController.popBackStack() },
                 onConversationCreated = { conversation ->
-                    val mine = currentUserId.toLongOrNull() ?: 0L
+                    val mine = currentUserId
                     val otherId = conversation.otherUser?.userId
                         ?: conversation.members.firstOrNull { it.userId != mine }?.userId
                         ?: 0L

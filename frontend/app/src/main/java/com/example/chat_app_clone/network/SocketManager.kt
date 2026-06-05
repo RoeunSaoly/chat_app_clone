@@ -14,22 +14,11 @@ import io.socket.client.Socket
 import org.json.JSONObject
 import java.net.URISyntaxException
 
-class SocketManager private constructor() {
+class SocketManager {
 
     private var mSocket: Socket? = null
     val gson = Gson()
     private val listeners = mutableMapOf<String, MutableList<(Array<Any>) -> Unit>>()
-
-    companion object {
-        @Volatile
-        private var instance: SocketManager? = null
-
-        fun getInstance(): SocketManager {
-            return instance ?: synchronized(this) {
-                instance ?: SocketManager().also { instance = it }
-            }
-        }
-    }
 
     fun connectSocket(jwtToken: String) {
         if (mSocket?.connected() == true) return

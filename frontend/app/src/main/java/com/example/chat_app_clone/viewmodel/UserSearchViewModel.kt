@@ -6,12 +6,15 @@ import com.example.chat_app_clone.data.model.Conversation
 import com.example.chat_app_clone.data.model.User
 import com.example.chat_app_clone.data.repository.ChatRepository
 import com.example.chat_app_clone.data.repository.UserRepository
+import com.example.chat_app_clone.data.PreferenceManager
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 data class UserSearchUiState(
     val query: String = "",
@@ -22,10 +25,14 @@ data class UserSearchUiState(
     val createdConversation: Conversation? = null
 )
 
-class UserSearchViewModel(
-    private val userRepository: UserRepository = UserRepository(),
-    private val chatRepository: ChatRepository = ChatRepository.getInstance()
+@HiltViewModel
+class UserSearchViewModel @Inject constructor(
+    private val userRepository: UserRepository,
+    private val chatRepository: ChatRepository,
+    private val preferenceManager: PreferenceManager
 ) : ViewModel() {
+
+    fun getCurrentUserId(): Long = preferenceManager.getUserId()
 
     private val _uiState = MutableStateFlow(UserSearchUiState(isLoading = true))
     val uiState: StateFlow<UserSearchUiState> = _uiState.asStateFlow()

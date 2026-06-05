@@ -4,9 +4,11 @@ import android.util.Log
 import com.example.chat_app_clone.network.model.AuthResponse
 import com.example.chat_app_clone.network.model.LoginRequest
 import com.example.chat_app_clone.network.model.RegisterRequest
+import javax.inject.Inject
+import javax.inject.Singleton
 
-class AuthService {
-    private val authApi = RetrofitClient.authApi
+@Singleton
+class AuthService @Inject constructor(private val authApi: AuthApi) {
     private val tag = "AuthService"
     
     suspend fun login(email: String, password: String): Result<AuthResponse> {

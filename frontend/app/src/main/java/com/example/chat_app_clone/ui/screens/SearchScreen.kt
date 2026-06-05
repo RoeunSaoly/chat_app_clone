@@ -23,7 +23,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.chat_app_clone.data.model.Conversation
 import com.example.chat_app_clone.data.model.User
 import com.example.chat_app_clone.ui.components.UserAvatar
@@ -33,9 +33,10 @@ import com.example.chat_app_clone.viewmodel.UserSearchViewModel
 @Composable
 fun SearchScreen(
     onBack: () -> Unit = {},
-    onConversationCreated: (Conversation) -> Unit = {}
+    onUserClick: (Long) -> Unit = {},
+    onConversationCreated: (Conversation) -> Unit = {},
+    viewModel: UserSearchViewModel = hiltViewModel()
 ) {
-    val viewModel: UserSearchViewModel = viewModel()
     val uiState by viewModel.uiState.collectAsState()
 
     // Reuse the same surface color logic as HomeScreen

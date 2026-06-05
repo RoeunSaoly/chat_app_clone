@@ -32,6 +32,7 @@ import com.example.chat_app_clone.ui.components.MessengerBottomNavBar
 import com.example.chat_app_clone.ui.components.UserAvatar
 import com.example.chat_app_clone.viewmodel.NotificationViewModel
 import com.example.chat_app_clone.viewmodel.PeopleViewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -39,13 +40,13 @@ fun PeopleScreen(
     onBack: () -> Unit = {},
     onChatClick: (Long) -> Unit = {},
     onProfileClick: (Long) -> Unit = {},
+    onSearchClick: () -> Unit = {},
     onHomeTabClick: () -> Unit = {},
     onSettingTabClick: () -> Unit = {},
-    onSearchClick: () -> Unit = {},
-    onNotificationsTapsClick: () -> Unit = {}
+    onNotificationsTapsClick: () -> Unit = {},
+    viewModel: PeopleViewModel = hiltViewModel(),
+    notificationViewModel: NotificationViewModel = hiltViewModel()
 ) {
-    val viewModel: PeopleViewModel = viewModel()
-    val notificationViewModel: NotificationViewModel = viewModel()
     val uiState by viewModel.uiState.collectAsState()
     val notificationUiState by notificationViewModel.uiState.collectAsState()
     var selectedTab by remember { mutableIntStateOf(1) }

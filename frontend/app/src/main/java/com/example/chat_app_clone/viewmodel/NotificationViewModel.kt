@@ -4,14 +4,15 @@ import com.example.chat_app_clone.data.PreferenceManager
 import com.example.chat_app_clone.data.repository.ChatRepository
 import com.example.chat_app_clone.data.repository.UserRepository
 import com.example.chat_app_clone.network.NotificationResponse
-import android.app.Application
-import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 data class NotificationUiState(
     val notifications: List<NotificationResponse> = emptyList(),
@@ -20,13 +21,12 @@ data class NotificationUiState(
     val error: String? = null
 )
 
-class NotificationViewModel(
-    application: Application
-) : AndroidViewModel(application) {
-
-    private val userRepository: UserRepository = UserRepository()
-    private val chatRepository: ChatRepository = ChatRepository.getInstance()
-    private val prefManager = PreferenceManager(application)
+@HiltViewModel
+class NotificationViewModel @Inject constructor(
+    private val userRepository: UserRepository,
+    private val chatRepository: ChatRepository,
+    private val prefManager: PreferenceManager
+) : ViewModel() {
     
     private val _uiState = MutableStateFlow(NotificationUiState())
     val uiState: StateFlow<NotificationUiState> = _uiState.asStateFlow()

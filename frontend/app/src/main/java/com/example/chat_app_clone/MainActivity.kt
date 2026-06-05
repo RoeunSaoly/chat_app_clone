@@ -22,34 +22,33 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import com.example.chat_app_clone.network.UpdateProfileRequest
-import com.example.chat_app_clone.network.RetrofitClient
 import com.example.chat_app_clone.network.SocketManager
 import com.example.chat_app_clone.ui.theme.Chat_app_cloneTheme
 
 import com.example.chat_app_clone.navigation.NavGraph
+import com.example.chat_app_clone.network.UserApi
+import com.example.chat_app_clone.data.PreferenceManager
+import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
 
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 
-    private val socketManager = SocketManager.getInstance()
-    private val prefManager by lazy { com.example.chat_app_clone.data.PreferenceManager(this) }
+    @Inject
+    lateinit var socketManager: SocketManager
+
+    @Inject
+    lateinit var prefManager: PreferenceManager
+
+    @Inject
+    lateinit var userApi: UserApi
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Initialize Networking with Token Refresh Support
-        RetrofitClient.init(
-            tokenProvider = { prefManager.getRefreshToken() },
-            refreshListener = { access, refresh ->
-                prefManager.saveTokens(access, refresh)
-                socketManager.disconnect()
-                socketManager.connectSocket(access)
-            }
-        )
-
         // Restore session
         val accessToken = prefManager.getAccessToken()
         if (!accessToken.isNullOrEmpty()) {
-            RetrofitClient.setAuthToken(accessToken)
             socketManager.connectSocket(accessToken)
             Log.d("MainActivity", "Session restored")
             
@@ -65,7 +64,7 @@ class MainActivity : ComponentActivity() {
                 
                 CoroutineScope(Dispatchers.IO).launch {
                     try {
-                        RetrofitClient.userApi.updateProfile(UpdateProfileRequest(fcmToken = token))
+                        userApi.updateProfile(UpdateProfileRequest(fcmToken = token))
                     } catch (e: Exception) {
                         e.printStackTrace()
                     }
@@ -102,7 +101,10 @@ class MainActivity : ComponentActivity() {
                 }
 
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    NavGraph(startDestination = startDestination, modifier = Modifier.padding(innerPadding))
+                    NavGraph(
+                        startDestination = startDestination,
+                        modifier = Modifier.padding(innerPadding)
+                    )
                 }
             }
         }
@@ -111,25 +113,6 @@ class MainActivity : ComponentActivity() {
     override fun onDestroy() {
         super.onDestroy()
         socketManager.disconnect()
-    }
-
-    companion object {
-        fun saveToken(context: Context, access: String, refresh: String) {
-            com.example.chat_app_clone.data.PreferenceManager(context).saveTokens(access, refresh)
-        }
-
-        fun saveCurrentUserId(context: Context, userId: Long, username: String) {
-            com.example.chat_app_clone.data.PreferenceManager(context).saveUser(userId, username)
-        }
-
-        fun getCurrentUserId(context: Context): String {
-            return com.example.chat_app_clone.data.PreferenceManager(context).getUserId().toString()
-        }
-
-        fun logout(context: Context) {
-            com.example.chat_app_clone.data.PreferenceManager(context).clear()
-            SocketManager.getInstance().disconnect()
-        }
     }
 }
 
